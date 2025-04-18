@@ -1,3 +1,6 @@
+[Langchain](https://python.langchain.com/docs/introduction/)
+[Ollama](https://ollama.com/)
+
 ## Prerequisites
 
 Make sure the following are installed on your system:
