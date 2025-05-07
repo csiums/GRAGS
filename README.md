@@ -17,7 +17,9 @@ Make sure the following are installed on your system:
 
 ## Getting Started
 
-Clone the repository and run the following commands from the project root:
+Clone the repository and provide your relevant files for each category under rag/docs/
+
+Then run the following commands from the project root:
 
 ```bash
 docker compose build
