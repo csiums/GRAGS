@@ -5,6 +5,9 @@
 [Ollama](https://ollama.com/)
 
 ## Documentation
+![alt text](http://url/to/img.png](https://github.com/csiums/GRAGS/blob/main/documentation/grafik.jpg?raw=true)
+
+
 Coming soon...
 
 ## Prerequisites
