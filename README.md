@@ -5,9 +5,9 @@
 [Ollama](https://ollama.com/)
 
 ## Documentation
-![Uploading grafik.jpg…]()
 
 
+![alt text](https://github.com/csiums/GRAGS/blob/main/documentation/grafik.jpg)
 
 Coming soon...
 
