@@ -1,3 +1,5 @@
+![goethe_smartphone](https://github.com/csiums/GRAGS/blob/main/documentation/goethe_smartphone.png)
+
 ## This Project uses
 
 [Langchain](https://python.langchain.com/docs/introduction/)
@@ -6,8 +8,6 @@
 
 ## Documentation
 
-
-![alt text](https://github.com/csiums/GRAGS/blob/main/documentation/grafik.jpg)
 
 Coming soon...
 
