@@ -28,8 +28,10 @@ run
 chmod +x install.sh
 ./install.sh
 
-Then run the following commands from the project root:
-
-```bash
+# Then run the following commands from the project root:
 docker compose build
 docker compose up
+```
+- [x] Create Tasklist
+- [x] Manage CPU support for devices
+- [ ] Make windows work 
