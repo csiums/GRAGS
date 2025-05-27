@@ -25,6 +25,9 @@ Clone the repository and provide your relevant files for each category under rag
 
 run
 ```bash
+# Clone the repository and run the installer:
+git clone https://github.com/csiums/GRAGS
+cd GRAGS
 chmod +x install.sh
 ./install.sh
 
