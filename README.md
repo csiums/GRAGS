@@ -24,11 +24,11 @@ Make sure the following are installed on your system:
 
 ## Getting Started
 
-- Clone the repository
-- provide your relevant files for each category under rag/docs/
+- Clone the repository or get the latest release from [here](https://github.com/csiums/GRAGS/releases)
+- Provide your relevant files for each category under rag/docs/
 - Define the following aspects for generation process:
   - base llm-model in [.env](https://github.com/csiums/GRAGS/blob/main/.env). A comperative list of open-source models can be found [here](https://osai-index.eu/the-index)
-  - Rest of the params actually don't do anything by now.. I'll work on this
+  - Rest of the params actually don't do anything by now.. I'll work on this..
 
 Then run:
 ```bash
@@ -39,7 +39,7 @@ docker compose -f docker-compose.gpu.yml up --build
 ```
 After succesffull building process, you can run each command without the `--build` flag
 
-### ToDo:
+### ToDo-List:
 - [x] Create Tasklist
 - [x] Manage CPU support for devices
 - [ ] Clean-up CUDA/CPU support in .env and .ymls
