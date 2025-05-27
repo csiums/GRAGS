@@ -23,7 +23,8 @@ Make sure the following are installed on your system:
 
 Clone the repository and provide your relevant files for each category under rag/docs/
 
-run ```bash
+run
+```bash
 chmod +x install.sh
 ./install.sh
 
