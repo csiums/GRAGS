@@ -26,8 +26,7 @@ Make sure the following are installed on your system:
 
 - Clone the repository
 - provide your relevant files for each category under rag/docs/
-- Define the base llm-model in [.env](https://github.com/csiums/GRAGS/blob/main/.env)
-- for textgeneration. A comperative list of open-source models can be found [here](https://osai-index.eu/the-index)
+- Define the base llm-model in [.env](https://github.com/csiums/GRAGS/blob/main/.env). A comperative list of open-source models can be found [here](https://osai-index.eu/the-index)
 
 Then run:
 ```bash
