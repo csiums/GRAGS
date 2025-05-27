@@ -34,4 +34,3 @@ docker compose up
 ### ToDo:
 - [x] Create Tasklist
 - [x] Manage CPU support for devices
-- [ ] Make windows work 
