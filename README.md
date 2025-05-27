@@ -38,7 +38,7 @@ docker compose -f docker-compose.cpu.yml up --build
 # For GPU support only:
 docker compose -f docker-compose.gpu.yml up --build
 ```
-After succesffull building process, you can run each command without `--build`
+After succesffull building process, you can run each command without the `--build` flag
 
 ### ToDo:
 - [x] Create Tasklist
