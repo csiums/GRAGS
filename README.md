@@ -31,8 +31,8 @@ cd GRAGS
 chmod +x install.sh
 ./install.sh
 
-Then run the following commands from the project root:
+#(if something fails, or you want to rebuild the container yourself, run this command)
+docker compose up --build
 
-```bash
-docker compose build
+# After successfull building, you no longer need to build the container each time you want to start the applicaiton. Simply run the following command from the project root:
 docker compose up
