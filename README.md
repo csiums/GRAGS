@@ -21,21 +21,15 @@ Make sure the following are installed on your system:
 
 ## Getting Started
 
-For now, only linux systems are supported:
-(I dont know how to "windows" - pls. help!)
+Clone the repository and provide your relevant files for each category under rag/docs/
+
+run
 ```bash
-# Clone the repository and run the installer:
-git clone https://github.com/csiums/GRAGS
-cd GRAGS
 chmod +x install.sh
 ./install.sh
 
-#(if something fails, or you want to rebuild the container yourself, run this command)
-docker compose up --build
+Then run the following commands from the project root:
 
-# After successfull building, you no longer need to build the container each time you want to start the applicaiton. Simply run the following command from the project root:
+```bash
+docker compose build
 docker compose up
-```
-### Tasks:
-- [x] Create Tasklist
-- [ ] Get windows to work

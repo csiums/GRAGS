@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   ragchat:
     build: .
@@ -12,8 +10,3 @@ services:
       - ./rag/docs:/app/rag/docs
       - ./rag/index:/app/rag/index
       - ./ollama-models:/root/.ollama/models
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
