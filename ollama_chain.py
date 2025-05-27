@@ -1,23 +1,30 @@
+import os
+import torch
 from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
-from langchain_core.runnables import RunnableSequence
-import torch
 
+def get_model_params():
+    return {
+        "model_kwargs": {
+            "temperature": float(os.getenv("OLLAMA_TEMPERATURE", 0.7)),
+            "num_predict": int(os.getenv("OLLAMA_MAX_TOKENS", 250)),
+            "top_p": float(os.getenv("OLLAMA_TOP_P", 0.9)),
+            "stop": os.getenv("OLLAMA_STOP", None) or None
+        }
+    }
 
 def get_ollama_chain(model_name="mistral"):
-    # Prüfe, ob CUDA/GPU verfügbar ist
     use_cuda = torch.cuda.is_available()
     mode = "cuda" if use_cuda else "cpu"
     print(f"💡 LLM läuft im Modus: {mode.upper()}")
 
-    # Erstelle das LLM
     llm = OllamaLLM(
         model=model_name,
-        stream=True,
-        llm_library=mode
+        stream=False,
+        llm_library=mode,
+        **get_model_params()
     )
 
-    # Definiere den Prompt
     prompt = PromptTemplate(
         input_variables=["context", "question"],
         template="""
@@ -49,10 +56,12 @@ Antwort:
 
     return prompt | llm
 
+
 def get_simple_llm(model_name="mistral"):
     mode = "cuda" if torch.cuda.is_available() else "cpu"
     return OllamaLLM(
         model=model_name,
         stream=False,
-        llm_library=mode
+        llm_library=mode,
+        **get_model_params()
     )

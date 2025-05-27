@@ -9,5 +9,7 @@ pypdf
 unstructured
 llama-cpp-python
 python-dotenv
+Whoosh
+scikit-learn
 
 
