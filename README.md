@@ -24,7 +24,9 @@ Make sure the following are installed on your system:
 
 ## Getting Started
 
-Clone the repository and provide your relevant files for each category under rag/docs/
+- Clone the repository
+- provide your relevant files for each category under rag/docs/
+- Define the base llm-model for textgeneration. A comperative list of open-source models can be found [here](https://osai-index.eu/the-index)
 
 Then run:
 ```bash
