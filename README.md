@@ -18,8 +18,9 @@ To see what libraries and tools are used, or to (re-)build a RAG-driven applicat
 
 Make sure the following are installed on your system:
 
-- [Docker](https://docs.docker.com/engine/install/)  
-- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) (for GPU acceleration)
+- [Docker](https://docs.docker.com/engine/install/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) (only if you plan to use GoetheGPT with a GPU)
 
 
 ## Getting Started
