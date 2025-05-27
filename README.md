@@ -28,8 +28,7 @@ run
 chmod +x install.sh
 ./install.sh
 
-Then run the following commands from the project root:
+# Then run the following commands from the project root:
 
-```bash
 docker compose build
 docker compose up
