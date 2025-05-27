@@ -1,0 +1,12 @@
+services:
+  ragchat:
+    build: .
+    container_name: rag-chat-multi-agent
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./rag/docs:/app/rag/docs
+      - ./rag/index:/app/rag/index
+      - ./ollama-models:/root/.ollama/models
