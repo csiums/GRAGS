@@ -35,3 +35,7 @@ docker compose up --build
 
 # After successfull building, you no longer need to build the container each time you want to start the applicaiton. Simply run the following command from the project root:
 docker compose up
+```
+### Tasks:
+- [x] Create Tasklist
+- [ ] Get windows to work
