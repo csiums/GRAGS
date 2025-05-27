@@ -41,7 +41,7 @@ def load_documents():
     docs = []
     categories = [d for d in os.listdir(DOCS_PATH) if os.path.isdir(os.path.join(DOCS_PATH, d))]
     total_files = sum(len(os.listdir(os.path.join(DOCS_PATH, c))) for c in categories)
-    progress = st.progress(0, text="📚 Dokumente laden...")
+    progress = st.progress(0, text="Dokumente laden...")
     processed_files = 0
 
     for category in categories:

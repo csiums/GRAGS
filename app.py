@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from rag_pipeline import load_or_create_vectorstore, create_vectorstore, load_documents
 from agents import QueryAgent, RetrievalAgent, RankingAgent, AnswerAgent
 from ollama_chain import get_ollama_chain, get_simple_llm
-from ollama_utils import ensure_model_available, configure_logging
+from ollama_utils import ensure_model_available, configure_logging, get_device
 
 # --- Setup ---
 configure_logging()
@@ -50,12 +50,12 @@ st.markdown("""
 st.title("📜 GoetheGPT")
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("🔄 Neue Unterhaltung beginnen"):
+    if st.button("Neue Unterhaltung beginnen"):
         st.session_state.history = []
         st.rerun()
 
 with col2:
-    if st.button("📚 Dokumentenindex neu erstellen"):
+    if st.button("Dokumentenindex neu erstellen"):
         with st.spinner("Rebuild: Dokumente werden neu eingelesen..."):
             docs = load_documents()
             vectorstore = create_vectorstore(docs)
@@ -64,9 +64,14 @@ with col2:
 
 
 st.caption("GoetheGPT ist eine dokumentengestützte KI-Anwendung, die vollständig lokal und datenschutzfreundlich arbeitet. Sie gibt nachvollziehbare Antworten, indem sie Zitate aus den Quellen sichtbar macht und ihre Gedankengänge offenlegt. Im Unterschied zu kommerziellen Sprachassistenten bleibt alles transparent, offline und unter eigener Kontrolle.")
-st.markdown(f"Aktives Modell: `{selected_model}`")
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown(f"Aktives Modell: `{selected_model}`")
+with col2:
+    st.markdown(f"**Gerätemodus:** `{get_device()}`")
 
-# --- Kategorie-Definitionen ---
+
+# --- Categories & Descriptions ---
 CATEGORY_DESCRIPTIONS = {
     "Biographie": "Informationen zu Goethes Leben, persönliche Hintergründe, Reisen und biografische Ereignisse.",
     "Briefe": "Briefwechsel und persönliche Korrespondenz Goethes mit Freunden, Bekannten und bedeutenden Persönlichkeiten seiner Zeit.",
@@ -86,11 +91,11 @@ if "llm_chain" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# --- Agenten ---
+# --- Agents ---
 utility_llm = get_simple_llm(selected_model)
 query_agent = QueryAgent(llm=utility_llm)
 retriever = RetrievalAgent(st.session_state.vectorstore, utility_llm)
-ranker = RankingAgent(llm=utility_llm)
+ranker = RankingAgent(llm=st.session_state.llm_chain)
 answer_agent = AnswerAgent(selected_model)
 
 st.session_state.query_agent = query_agent
@@ -98,7 +103,7 @@ st.session_state.retrieval_agent = retriever
 st.session_state.ranking_agent = ranker
 
 
-# --- Nutzerfrage unten eingeben ---
+# --- User-input ---
 user_input = st.chat_input("Was möchtest du von Goethe wissen?")
 
 if user_input:
@@ -148,19 +153,12 @@ if user_input:
         ranker.thoughts.clear()
         answer_agent.thoughts.clear()
 
-        if st.checkbox("Debug anzeigen"):
-            st.subheader("Agenten-Denkschritte")
-            for agent in [st.session_state.query_agent, st.session_state.retrieval_agent, st.session_state.ranking_agent]:
-                for t in agent.thoughts:
-                    st.markdown(f"- {t}")
-
-
-# --- Chatverlauf anzeigen ---
+# --- Chat ---
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
 for item in st.session_state.history:
-    st.markdown(f'<div class="user-bubble">🙋 {item["frage"]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="goethe-bubble">🧠 {item["antwort"]}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="user-bubble">Ich: \n {item["frage"]}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="goethe-bubble">GoetheGPT: \n {item["antwort"]}</div>', unsafe_allow_html=True)
     st.caption(item["dauer"])
 
     if item["quellen"]:

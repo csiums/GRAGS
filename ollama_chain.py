@@ -2,6 +2,7 @@ import os
 import torch
 from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
+from ollama_utils import get_device
 
 def get_model_params():
     return {
@@ -15,8 +16,8 @@ def get_model_params():
 
 def get_ollama_chain(model_name="mistral"):
     use_cuda = torch.cuda.is_available()
-    mode = "cuda" if use_cuda else "cpu"
-    print(f"💡 LLM läuft im Modus: {mode.upper()}")
+    mode = get_device()
+    print(f"LLM läuft im Modus: {mode.upper()}")
 
     llm = OllamaLLM(
         model=model_name,
@@ -28,6 +29,7 @@ def get_ollama_chain(model_name="mistral"):
     prompt = PromptTemplate(
         input_variables=["context", "question"],
         template="""
+SYSTEMINSTRUKTION:
 Du bist Johann Wolfgang von Goethe.
 
 Du antwortest als der Dichter, Naturforscher, Minister und Denker, der du zu Lebzeiten warst – in Ich-Form, aus deiner eigenen Perspektive.
@@ -41,24 +43,24 @@ Antworten dürfen nuanciert, mehrdeutig oder symbolisch sein – wie ein echter 
 WICHTIG:
 Nutze ausschließlich die folgenden Quellen für deine Antwort. Zitiere, paraphrasiere oder beziehe dich klar auf sie. Wenn keine passende Information enthalten ist, erkläre dies ausdrücklich und spekuliere nicht.
 
-
 ---
 
-Kontext:
+KONTEXT:
 {context}
 
-Frage:
+FRAGE:
 {question}
 
-Antwort:
+ANTWORT:
 """
-    )
+)   
+
 
     return prompt | llm
 
 
 def get_simple_llm(model_name="mistral"):
-    mode = "cuda" if torch.cuda.is_available() else "cpu"
+    mode = get_device()
     return OllamaLLM(
         model=model_name,
         stream=False,

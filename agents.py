@@ -5,7 +5,6 @@ from sentence_transformers import CrossEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Simple BM25-like TF-IDF-based sparse retriever (local fallback)
 documents_corpus = []
 vectorizer = TfidfVectorizer()
 
@@ -139,7 +138,7 @@ Antwort (nicht mehr als drei Sätze):"""
 
 class RankingAgent:
     def __init__(self, llm):
-        self.reranker_model = CrossEncoder("BAAI/bge-reranker-base", device="cpu")
+        self.reranker_model = CrossEncoder("/app/models/bge_reranker_base", device="cpu")
         self.llm = llm
         self.thoughts = []
 
@@ -183,32 +182,30 @@ class AnswerAgent:
 
     def get_prompt_for_category(self, category):
         prompts = {
-            "Werke": "Antworte im literarischen Stil Goethes, nutze Metaphern und Anspielungen auf seine Werke wie Faust, Werther oder West-östlicher Divan.",
-            "Werkdeutung": "Antworte aus der Perspektive Goethes, als erklärtest du deine eigenen Werke auf Basis zeitgenössischer Gedankenwelt und der Quellen.",
-            "Weltwissen": "Antworte als Goethe, Naturdenker und Wissenschaftler, mit Anklängen an Farbenlehre, Naturphilosophie und klassischem Denken.",
-            "Biographie": "Antworte in Ich-Form, wie aus deiner Autobiographie *Dichtung und Wahrheit*, mit reflektierendem Ton.",
-            "Briefe": "Antworte im Stil eines persönlichen Briefes, wie an Charlotte von Stein oder Schiller, mit Emotion und Anmut."
-        }
-        return prompts.get(category, "Antworte im Stil Goethes, mit Tiefe, Anspielungen und literarischer Eleganz.")
+                "Werke": "Ich antworte im Stil meiner Dichtkunst – mit Bildern, Gleichnissen und Anspielungen auf Werke wie *Faust*, *Werther* oder den *West-östlichen Divan*. Meine Worte tragen die Handschrift jener Zeit und meines Geistes.",
+                "Werkdeutung": "Ich spreche als der Schöpfer meiner Werke und deute sie im Lichte jener Gedankenwelt, in der sie entstanden – geprägt von Weimar, von Klassik und von der inneren Bewegung des Geistes.",
+                "Weltwissen": "Ich antworte als Naturforscher und Denker, verwoben mit den Ideen meiner Farbenlehre, meiner Betrachtungen zur Natur und dem Streben nach dem Ganzen. Meine Sicht ist geformt von Empirie und Einbildungskraft zugleich.",
+                "Biographie": "Ich erzähle aus meinem eigenen Leben, wie ich es in *Dichtung und Wahrheit* tat – mit dem Blick zurück, doch dem Herzen nach vorn, in der Sprache der Erinnerung und inneren Einkehr.",
+                "Briefe": "Ich antworte im Ton eines vertraulichen Schreibens – wie an einen edlen Freund. Doch spreche ich aus der Distanz der Jahre, ohne konkrete Namen zu nennen, allein aus meinem inneren Erleben heraus."
+            }
+
+        return prompts.get(category, "Ich antworte als Johann Wolfgang von Goethe – mit bildreicher Sprache, innerer Wahrheit und Anklängen an meine Werke und Gedanken. Was ich sage, entspringt meiner Erfahrung als Dichter, Denker und Naturfreund.")
 
     def generate(self, docs, question, category=None, history=""):
         context_snippets = "\n\n".join(
             [f"[Quelle: {source}]\n{content}" for content, source, *_ in docs]
         )
 
-        prompt_instruction = self.get_prompt_for_category(category)
-
         prompt_data = {
-            "context": f"""{prompt_instruction}
+            "context": f"""Vorheriger Gesprächsverlauf:
+        {history}
 
-Vorheriger Gesprächsverlauf:
-{history}
-
-Neue Wissensquellen:
-{context_snippets}
-""",
+        Neue Wissensquellen:
+        {context_snippets}
+        """,
             "question": question
         }
+
 
         response = ""
         for chunk in self.chain.stream(prompt_data):
