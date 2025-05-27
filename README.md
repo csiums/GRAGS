@@ -33,8 +33,10 @@ Make sure the following are installed on your system:
 
 Then run:
 ```bash
-docker compose build
-docker compose up
+# For CPU support only:
+docker compose -f docker-compose.cpu.yml up --build
+# For GPU support only:
+docker compose -f docker-compose.gpu.yml up --build
 ```
 ### ToDo:
 - [x] Create Tasklist
