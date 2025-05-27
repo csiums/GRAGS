@@ -15,7 +15,7 @@ The "GoetheGPT" project is being developed as part of a master's thesis in the "
 
 Make sure the following are installed on your system:
 
-- [Docker](https://docs.docker.com/engine/install/)  
+- [Docker & Docker Compose](https://docs.docker.com/engine/install/)
 - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) (for GPU acceleration)
 
 
