@@ -38,6 +38,8 @@ docker compose -f docker-compose.cpu.yml up --build
 # For GPU support only:
 docker compose -f docker-compose.gpu.yml up --build
 ```
+After succesffull building process, you can run each command without `--build`
+
 ### ToDo:
 - [x] Create Tasklist
 - [x] Manage CPU support for devices
