@@ -1,68 +1,67 @@
- Ollama & LangChain Integration
+Ollama & LangChain Integration
 
-    Integration von Ollama in LangChain
-    https://python.langchain.com/docs/integrations/llms/ollama/
+Integrating Ollama into LangChain
+https://python.langchain.com/docs/integrations/llms/ollama/
 
-    Lokales Ausführung von LLMs mit Ollama und LangChain
-    https://medium.com/@abonia/ollama-and-langchain-run-llms-locally-900931914a46
+Running LLMs locally with Ollama and LangChain
+https://medium.com/@abonia/ollama-and-langchain-run-llms-locally-900931914a46
 
 2. HuggingFace Embeddings
 
-    Dokumentation zur Verwendung von HuggingFaceEmbeddings in LangChain
-    https://python.langchain.com/api_reference/huggingface/embeddings/langchain_huggingface.embeddings.huggingface.HuggingFaceEmbeddings.html
+Documentation for using HuggingFaceEmbeddings in LangChain
+https://python.langchain.com/api_reference/huggingface/embeddings/langchain_huggingface.embeddings.huggingface.HuggingFaceEmbeddings.html
 
-    Integration von HuggingFace-Modellen in LangChain
-    https://medium.com/@scholarly360/langchain-huggingface-complete-guide-on-colab-dfafe04fe661
+Integrating HuggingFace models into LangChain
+https://medium.com/@scholarly360/langchain-huggingface-complete-guide-on-colab-dfafe04fe661
 
-3. FAISS Vektorspeicher
+3. FAISS Vector Store
 
-    FAISS-Integration in LangChain
-    https://python.langchain.com/docs/integrations/vectorstores/faiss/
+FAISS Integration with LangChain
+https://python.langchain.com/docs/integrations/vectorstores/faiss/
 
-    Erstellung von FAISS-Vektordatenbanken mit LangChain
-    https://www.arsturn.com/blog/creating-faiss-vector-databases-with-langchain
+Creating FAISS Vector Databases with LangChain
+https://www.arsturn.com/blog/creating-faiss-vector-databases-with-langchain
 
-4. PyPDFLoader (PDF-Verarbeitung)
+4. PyPDFLoader (PDF Processing)
 
-    PDF-Ladefunktion
-    https://python.langchain.com/docs/how_to/document_loader_pdf/
+PDF Loading Function
+https://python.langchain.com/docs/how_to/document_loader_pdf/
 
-    Laden eines PDFs als Dokumentenliste
-    https://dev.to/smuniraj/a-simple-guide-to-loading-an-entire-pdf-into-a-list-of-documents-using-langchain-4hih
+Loading a PDF as a Document List 
+https://dev.to/smuniraj/a-simple-guide-to-loading-an-entire-pdf-into-a-list-of-documents-using-langchain-4hih
 
-5. RecursiveCharacterTextSplitter
+5. RecursiveCharacterTextSplitter 
 
-    LangChain Text Splitter
-    https://python.langchain.com/docs/how_to/recursive_text_splitter/
-    https://dev.to/eteimz/understanding-langchains-recursivecharactertextsplitter-2846
+LangChain Text Splitter 
+https://python.langchain.com/docs/how_to/recursive_text_splitter/ 
+https://dev.to/eteimz/understanding-langchains-recursivecharactertextsplitter-2846
 
-6. PromptTemplate
+6. PromptTemplate 
 
-    Prompt Templates (LangChain)
-    https://python.langchain.com/docs/concepts/prompt_templates/
-    https://www.pingcap.com/article/steps-to-get-started-with-langchain-prompt-templates/
+Prompt Templates (LangChain) 
+https://python.langchain.com/docs/concepts/prompt_templates/ 
+https://www.pingcap.com/article/steps-to-get-started-with-langchain-prompt-templates/
 
-7. RunnableSequence
+7. RunnableSequence 
 
-    RunnableSequence
-    https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.base.RunnableSequence.html
+RunnableSequence
+https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.base.RunnableSequence.html
 
-    LangChain Runnables
-    https://mirascope.com/blog/langchain-runnables/
+LangChain Runnables
+https://mirascope.com/blog/langchain-runnables/
 
-8. Streamlit Integration mit LangChain
+8. Streamlit Integration with LangChain
 
-    Erstellung eines LLM-Chatbots
-    https://docs.streamlit.io/develop/tutorials/chat-and-llm-apps/llm-quickstart
+Creating an LLM Chatbot
+https://docs.streamlit.io/develop/tutorials/chat-and-llm-apps/llm-quickstart
 
-    LangChain Chatbot mit Streamlit
-    https://medium.com/@muhammadrivaldisaifulrafi/your-first-langchain-chatbot-with-streamlit-a-tutorial-50c36cd6672a
+LangChain Chatbot with Streamlit
+https://medium.com/@muhammadrivaldisaifulrafi/your-first-langchain-chatbot-with-streamlit-a-tutorial-50c36cd6672a
 
 9. Docker & docker-compose
 
-    Dockerfile für Python-Apps mit LangChain
-    https://simonwillison.net/2023/May/2/langchain-docker/
+Dockerfile for Python Apps with LangChain
+https://simonwillison.net/2023/May/2/langchain-docker/
 
-    Beispiel für docker-compose mit LangChain & Streamlit
-    https://github.com/shreyashankar/langchain-docker
-
+Docker-compose example with LangChain & Streamlit
+https://github.com/shreyashankar/langchain-docker
