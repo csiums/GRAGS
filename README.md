@@ -15,7 +15,7 @@ The "GoetheGPT" project is being developed as part of a master's thesis in the "
 
 Make sure the following are installed on your system:
 
-- [Docker & Docker Compose](https://docs.docker.com/engine/install/)
+- [Docker](https://docs.docker.com/engine/install/)  
 - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) (for GPU acceleration)
 
 
@@ -28,7 +28,8 @@ run
 chmod +x install.sh
 ./install.sh
 
-# Then run the following commands from the project root:
+Then run the following commands from the project root:
 
+```bash
 docker compose build
 docker compose up
