@@ -21,9 +21,8 @@ Make sure the following are installed on your system:
 
 ## Getting Started
 
-Clone the repository and provide your relevant files for each category under rag/docs/
-
-run
+For now, only linux systems are supported:
+(I dont know how to "windows" - pls. help!)
 ```bash
 # Clone the repository and run the installer:
 git clone https://github.com/csiums/GRAGS
