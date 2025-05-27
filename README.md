@@ -1,3 +1,4 @@
+# Goethe Retreival Augmented Generation System 
 ![goethe_smartphone](https://github.com/csiums/GRAGS/blob/main/documentation/goethe_smartphone.png)
 
 ## This Project uses
