@@ -18,6 +18,8 @@ Make sure the following are installed on your system:
 - [Docker](https://docs.docker.com/engine/install/)  
 - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) (for GPU acceleration)
 
+Define the main generation languagemodel from the [model selection](https://ollama.com/search) on the ollama website
+
 
 ## Getting Started
 
