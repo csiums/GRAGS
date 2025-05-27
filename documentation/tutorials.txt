@@ -1,3 +1,5 @@
+# This mostly is a notpad for myself, listing all relevant tutorials for creating GRAGS. But you should be able to build a RAG driven Chatbot yourself, following the guides mentioned in this list!
+
 Ollama & LangChain Integration
 
 Integrating Ollama into LangChain
