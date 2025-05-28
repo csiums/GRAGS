@@ -11,15 +11,25 @@ def ensure_model_available(model_name):
         result = subprocess.run(["ollama", "list"], capture_output=True, text=True, check=True)
         installed_models = [line.split()[0] for line in result.stdout.strip().splitlines()[1:]]
 
-        if model_name not in installed_models:
-            print(f"Modell '{model_name}' nicht gefunden – wird jetzt geladen...")
-            pull_result = subprocess.run(["ollama", "pull", model_name], check=True)
-            print(f"Modell '{model_name}' erfolgreich geladen.")
+        if model_name in installed_models:
+            print(f"Modell '{model_name}' ist lokal verfügbar.")
         else:
-            print(f"Modell '{model_name}' ist bereits vorhanden.")
+            print(f"Modell '{model_name}' nicht lokal installiert.")
+            print("Versuche, Modell zu laden (nur wenn online)...")
+            try:
+                subprocess.run(["ollama", "pull", model_name], check=True)
+                print(f"Modell '{model_name}' erfolgreich geladen.")
+            except subprocess.CalledProcessError as pull_err:
+                raise RuntimeError(
+                    f"Modell konnte nicht geladen werden.\n"
+                    f"Möglicherweise bist du offline.\n"
+                    f"Bitte führe diesen Befehl manuell aus, wenn du wieder online bist:\n"
+                    f"    ollama pull {model_name}\n\n"
+                    f"Technischer Fehler:\n{pull_err}"
+                )
+    except subprocess.CalledProcessError as list_err:
+        raise RuntimeError(f"❌ Fehler bei 'ollama list': {list_err}")
 
-    except subprocess.CalledProcessError as e:
-        print(f"Fehler beim Prüfen oder Laden des Modells '{model_name}': {e}")
 
 
 def list_ollama_models():
