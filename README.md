@@ -33,6 +33,13 @@ Make sure the following are installed on your system:
 
 Then run:
 ```bash
+git lfs install && \
+mkdir -p models && \
+cd models && \
+git clone https://huggingface.co/BAAI/bge-reranker-base && \
+cd ..
+
+
 # For CPU support only:
 docker compose -f docker-compose.cpu.yml up --build
 # For GPU support only:
