@@ -14,7 +14,9 @@ def get_model_params():
         }
     }
 
-def get_ollama_chain(model_name="mistral"):
+def get_ollama_chain(model_name=None):
+    if model_name is None:
+        model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
     use_cuda = torch.cuda.is_available()
     mode = get_device()
     print(f"LLM läuft im Modus: {mode.upper()}")
@@ -59,7 +61,9 @@ ANTWORT:
     return prompt | llm
 
 
-def get_simple_llm(model_name="mistral"):
+def get_simple_llm(model_name=None):
+    if model_name is None:
+        model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
     mode = get_device()
     return OllamaLLM(
         model=model_name,
