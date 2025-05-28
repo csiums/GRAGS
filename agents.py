@@ -176,7 +176,9 @@ Antwort (nur eine Zahl von 1 bis 10):"""
         return top_results
 
 class AnswerAgent:
-    def __init__(self, model_name="mistral"):
+    def __init__(self, model_name=None):
+        if model_name is None:
+            model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
         self.chain = get_ollama_chain(model_name)
         self.thoughts = []
 
