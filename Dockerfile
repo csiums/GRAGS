@@ -21,6 +21,8 @@ COPY . .
 
 COPY models/bge_reranker_base /app/models/bge_reranker_base
 
+ENV MODEL=llama3.2
+
 EXPOSE 8501
 
-CMD bash -c "ollama serve & sleep 2 && ollama pull $OLLAMA_MODEL && streamlit run app.py --server.port=8501 --server.enableCORS=false"
+CMD ["bash", "-c", "ollama serve & sleep 3 && ollama pull ${MODEL} && streamlit run app.py -- --model ${MODEL} --server.port=8501 --server.enableCORS=false"]
