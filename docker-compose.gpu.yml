@@ -9,7 +9,7 @@ services:
     volumes:
       - ./rag/docs:/app/rag/docs
       - ./rag/index:/app/rag/index
-      - - ./ollama-models:/root/.ollama
+      - ./ollama-models:/root/.ollama
     deploy:
       resources:
         reservations:
