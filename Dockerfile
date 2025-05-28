@@ -21,7 +21,7 @@ COPY . .
 
 COPY models/bge_reranker_base /app/models/bge_reranker_base
 
-ENV MODEL=mistral:latest
+CMD ["bash", "-c", "ollama serve & sleep 3 && ollama pull $(grep OLLAMA_MODEL .env | cut -d '=' -f2) && streamlit run app.py --server.port=8501 --server.enableCORS=false"]
 
 EXPOSE 8501
 
