@@ -23,4 +23,4 @@ COPY models/bge_reranker_base /app/models/bge_reranker_base
 
 EXPOSE 8501
 
-CMD ["bash", "-c", "ollama serve & sleep 3 && ollama pull $(grep OLLAMA_MODEL .env | cut -d '=' -f2) && streamlit run app.py --server.port=8501 --server.enableCORS=false"]
+CMD bash -c "ollama serve & sleep 2 && ollama pull $OLLAMA_MODEL && streamlit run app.py --server.port=8501 --server.enableCORS=false"
