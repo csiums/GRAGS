@@ -9,4 +9,5 @@ services:
     volumes:
       - ./rag/docs:/app/rag/docs
       - ./rag/index:/app/rag/index
-      - ./ollama-models:/root/.ollama/models
+      - ./ollama-models:/root/.ollama
+
