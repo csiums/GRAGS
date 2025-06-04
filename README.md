@@ -51,3 +51,4 @@ After succesffull building process, you can run each command without the `--buil
 - [x] Create Tasklist
 - [x] Manage CPU support for devices
 - [ ] Clean-up CUDA/CPU support in .env and .ymls
+- [ ] Choose "Woosh" Library over bge-reranker for compatibility reasons?
