@@ -1,0 +1,32 @@
+# Core Requirements
+streamlit>=1.20.0              # Web-based app framework
+langchain>=0.1.0               # LangChain core
+langchain-core>=0.1.0          # LangChain core internals
+langchain-community>=0.0.6     # Community tools for LangChain
+langchain-ollama>=0.1.0        # Ollama integration for LangChain
+langchain-huggingface>=0.0.2   # Hugging Face integration
+
+# Vectorstore and Embedding Requirements
+faiss-cpu>=1.7.4               # FAISS for CPU (use faiss-gpu for GPU environments)
+sentence-transformers>=2.2.2   # Pre-trained sentence embedding models
+
+# PDF and Document Parsing
+pypdf>=3.8.1                   # PDF parsing library
+unstructured>=0.9.7            # Unstructured document processing library
+
+# Llama and Ollama Requirements
+llama-cpp-python>=0.1.77       # Llama.cpp Python bindings
+python-dotenv>=1.0.0           # Environment variable management
+
+# Search and Ranking
+Whoosh>=2.7.4                  # Full-text search library
+scikit-learn>=1.2.2            # ML library for ranking and scoring
+
+# Optional GPU Support
+# Uncomment the following line for GPU-enabled FAISS
+# faiss-gpu>=1.7.4
+
+# Notes:
+# - Use `pip install -r requirements.txt` to install.
+# - Remove upper bounds to allow pip to resolve compatible versions.
+# - Python 3.13 is very new — allow pip to choose best matches for it.

@@ -1,0 +1,25 @@
+.user-bubble {
+    background-color: #1a73e8;
+    color: white;
+    padding: 0.5em 1em;
+    border-radius: 1em;
+    margin-bottom: 0.3em;
+    max-width: 80%;
+    align-self: flex-end;
+}
+
+.goethe-bubble {
+    background-color: #444;
+    color: white;
+    padding: 0.5em 1em;
+    border-radius: 1em;
+    margin-bottom: 0.3em;
+    max-width: 80%;
+    align-self: flex-start;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
