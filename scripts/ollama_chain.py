@@ -60,3 +60,8 @@ def get_simple_llm(model_name=None, device=None):
         llm_library=mode,
         **get_model_params()
     )
+
+# --- Wrapper for Blocking LLM Calls ---
+def run_llm(llm, prompt, context, question):
+    result = llm.invoke({"context": context, "question": question})
+    return result

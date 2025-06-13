@@ -1,5 +1,3 @@
-# rag_pipeline.py
-
 import os
 import xml.etree.ElementTree as ET
 import pickle
@@ -42,7 +40,7 @@ def save_file_metadata():
     with open(METADATA_FILE, "wb") as f:
         pickle.dump(get_file_metadata(), f)
 
-# --- Dokumente laden & parsen ---
+# --- Load Documents ---
 def load_documents():
     docs = []
     categories = [d for d in os.listdir(DOCS_PATH) if os.path.isdir(os.path.join(DOCS_PATH, d))]
@@ -69,7 +67,6 @@ def load_documents():
                     root = tree.getroot()
                     text = ET.tostring(root, encoding="unicode", method="text")
                     loaded = [Document(page_content=text)]
-                # Weitere Dateitypen hier ergänzbar
 
                 for doc in loaded:
                     doc.metadata["source"] = filename
@@ -109,10 +106,14 @@ def load_or_create_vectorstore():
 
 # --- Dokumentensuche im Vektorstore ---
 def retrieve_docs_with_sources(vstore, query, k=4, category=None):
-    results = vstore.similarity_search(query, k=20)
+    results = vstore.similarity_search(query, k=50)  # Erhöhe k, um mehr Ergebnisse zu erhalten
+    print(f"[RAG] Gefundene Dokumente ohne Filter: {len(results)}")
+
     if category:
         results = [doc for doc in results if doc.metadata.get("category") == category]
         print(f"[RAG] Gefundene Dokumente nach Filter: {len(results[:k])}")
+    else:
+        print(f"[RAG] Gefundene Dokumente ohne Filter: {len(results)}")
 
     return [
         (doc.page_content, doc.metadata.get("source", "unbekannt"), doc.metadata.get("category", "unbekannt"))

@@ -1,9 +1,9 @@
-import streamlit as st
+import logging
 import time
 import os
 import torch
 from dotenv import load_dotenv
-from concurrent.futures import ThreadPoolExecutor
+import streamlit as st
 
 from prompts import CATEGORY_DESCRIPTIONS
 from rag_pipeline import load_or_create_vectorstore, create_vectorstore, load_documents
@@ -22,14 +22,14 @@ warn_if_no_gpu()
 with open("styles.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-st.title("📜 GoetheGPT")
+st.title("GoetheGPT")
 
 # Buttons zum Neustarten oder Index neu erstellen
 col1, col2 = st.columns(2)
 with col1:
     if st.button("Neue Unterhaltung beginnen"):
         st.session_state.history = []
-        st.experimental_rerun()
+        st.rerun()
 
 with col2:
     if st.button("Dokumentenindex neu erstellen"):
@@ -74,44 +74,24 @@ st.session_state.retrieval_agent = retriever
 st.session_state.ranking_agent = ranker
 st.session_state.answer_agent = answer_agent
 
-# Debug-Log aktivieren (Checkbox über Chatfenster)
-show_debug = st.checkbox("Live Debug anzeigen (über Chat)", value=False)
-
 # --- Eingabefeld ---
 user_input = st.chat_input("Was möchtest du von Goethe wissen?")
 
-if user_input:
-    with st.spinner("Goethe denkt nach..."):
-        start = time.time()
+# --- Query-Handling ---
+def handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_history):
+    start = time.time()
+    logging.info(f"Starte die Anfrage: '{user_input}'")
 
-        # Chat History als String (letzte 2 Runden)
-        chat_history = ""
-        for past in st.session_state.history[-2:]:
-            frage = past.get("frage", "").strip()
-            antwort = past.get("antwort", "").strip()
-            if frage and antwort:
-                chat_history += f"Frage: {frage}\nAntwort: {antwort}\n\n"
-
-        # Teilfragen zerlegen mit Kontext
+    try:
+        # Decompose the query into subqueries
         subqueries = query_agent.decompose_query(user_input, history=chat_history)
 
-        # Parallel Retrieval pro Teilfrage mit Kategorie
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [
-                executor.submit(
-                    retriever.retrieve,
-                    subq,
-                    category=query_agent.assign_category_with_description(subq, CATEGORY_DESCRIPTIONS)
-                )
-                for subq in subqueries
-            ]
-            results = [future.result() for future in futures]
-
+        # Retrieve and rank documents
         docs = []
-        for docs_result in results:
-            docs.extend(docs_result)
+        for subq in subqueries:
+            docs.extend(retriever.retrieve(subq, category=query_agent.assign_category_with_description(subq, CATEGORY_DESCRIPTIONS)))
 
-        # Duplikate filtern
+        # Filter out duplicates
         seen = set()
         unique_docs = []
         for doc in docs:
@@ -125,23 +105,44 @@ if user_input:
                 seen.add(key)
                 unique_docs.append(doc)
 
-        # Ranking nur, wenn docs da sind
+        logging.info(f"Gefundene Dokumente insgesamt: {len(unique_docs)}")
+
         top_docs = []
         if unique_docs:
             top_docs = ranker.rerank(unique_docs, user_input, top_k=5)
 
-        # Antwort generieren, Chat-History mitgeben
         if top_docs and isinstance(top_docs[0], tuple):
+            logging.info(f"Top-Dokumente (tuple) an Antwortagenten übergeben.")
             answer = answer_agent.generate(top_docs, user_input, history=chat_history)
         elif top_docs and isinstance(top_docs[0], dict):
+            logging.info(f"Top-Dokumente (dict) an Antwortagenten übergeben.")
             tupleized = [(doc.get("content", ""), doc.get("source", "unbekannt"), doc.get("category", "")) for doc in top_docs]
             answer = answer_agent.generate(tupleized, user_input, history=chat_history)
         else:
+            logging.warning(f"Keine relevanten Dokumente gefunden.")
             answer = "Ich konnte leider keine relevante Antwort finden."
 
         end = time.time()
+        logging.info(f"Antwort generiert in {end - start:.2f} Sekunden.")
+        return answer, top_docs, subqueries, end - start
 
-        # Verlauf speichern inkl. Gedanken
+    except Exception as e:
+        logging.error(f"Fehler bei der Verarbeitung der Anfrage: {e}")
+        return "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.", [], [], 0
+
+# --- Query-Handling ---
+if user_input:
+    with st.spinner("Goethe denkt nach..."):
+        chat_history = ""
+        for past in st.session_state.history[-2:]:
+            frage = past.get("frage", "").strip()
+            antwort = past.get("antwort", "").strip()
+            if frage and antwort:
+                chat_history += f"Frage: {frage}\nAntwort: {antwort}\n\n"
+
+        answer, top_docs, subqueries, duration = handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_history)
+
+        # Ergebnisse im Verlauf speichern
         st.session_state.history.append({
             "frage": user_input,
             "antwort": answer,
@@ -153,38 +154,17 @@ if user_input:
                 "ranking": list(ranker.thoughts),
                 "antwort": list(answer_agent.thoughts),
             },
-            "dauer": f"Antwortzeit: {end - start:.2f} Sekunden"
+            "dauer": f"Antwortzeit: {duration:.2f} Sekunden"
         })
 
-        # Gedanken leeren und CUDA Cache säubern
+        # Gedanken löschen für die nächste Anfrage
         query_agent.thoughts.clear()
         retriever.thoughts.clear()
         ranker.thoughts.clear()
         answer_agent.thoughts.clear()
         torch.cuda.empty_cache()
 
-# --- Debugbereich über dem Chat ---
-if show_debug:
-    with st.expander("🔍 Live Debug (Agenten-Gedanken)", expanded=True):
-        for idx, item in enumerate(st.session_state.history[::-1]):  # neueste zuerst
-            with st.expander(f"Chat #{len(st.session_state.history)-idx} Debug", expanded=(idx == 0)):
-                st.markdown("**Zerlegung der Frage (QueryAgent):**")
-                for thought in item["gedanken"]["query"]:
-                    st.markdown(f"- {thought}")
-
-                st.markdown("**Dokumentensuche (RetrievalAgent):**")
-                for thought in item["gedanken"]["retrieval"]:
-                    st.markdown(f"- {thought}")
-
-                st.markdown("**Ranking (RankingAgent):**")
-                for thought in item["gedanken"]["ranking"]:
-                    st.markdown(f"- {thought}")
-
-                st.markdown("**Antwortgenerierung (AnswerAgent):**")
-                for thought in item["gedanken"]["antwort"]:
-                    st.markdown(f"- {thought}")
-
-# --- Chat Verlauf ---
+# --- Chat-Verlauf anzeigen ---
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
 for item in st.session_state.history:

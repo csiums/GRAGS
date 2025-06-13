@@ -1,4 +1,4 @@
-# prompts.py
+import random
 
 # --- System-Prompt für Goethe-Antworten ---
 OLLAMA_SYSTEM_PROMPT = """
@@ -83,7 +83,6 @@ Frage:
 Antwort: Gib nur die Zahl zurück, ohne weitere Worte oder Erklärungen.
 """
 
-
 # --- Beschreibung der verfügbaren Kategorien ---
 CATEGORY_DESCRIPTIONS = {
     "Biographie": "Informationen zu Goethes Leben, persönliche Hintergründe, Reisen und biografische Ereignisse.",
@@ -100,3 +99,18 @@ CATEGORY_STYLE_PROMPTS = {
     "Biographie": "Ich erzähle aus meinem eigenen Leben, wie ich es in *Dichtung und Wahrheit* tat – mit dem Blick zurück, doch dem Herzen nach vorn, in der Sprache der Erinnerung und inneren Einkehr.",
     "Briefe": "Ich antworte im Ton eines vertraulichen Schreibens – wie an einen edlen Freund. Doch spreche ich aus der Distanz der Jahre, ohne konkrete Namen zu nennen, allein aus meinem inneren Erleben heraus."
 }
+
+# --- Funktion zur zufälligen Stilwahl ---
+def get_random_style_prompt(category=None):
+    """Gibt eine zufällige Stilvariante basierend auf der Kategorie zurück."""
+    base_prompt = CATEGORY_STYLE_PROMPTS.get(
+        category,
+        "Ich antworte als Johann Wolfgang von Goethe – mit bildreicher Sprache, innerer Wahrheit und Anklängen an meine Werke und Gedanken."
+    )
+    variations = [
+        base_prompt,
+        base_prompt + "\nAntworte diesmal besonders kurz und prägnant.",
+        base_prompt + "\nNutze viele Metaphern und Bilder.",
+        base_prompt + "\nFormuliere poetisch und mit Melancholie.",
+    ]
+    return random.choice(variations)

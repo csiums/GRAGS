@@ -1,60 +1,60 @@
 import os
 import subprocess
 import logging
+import time
+import requests
 
 try:
     import torch
 except ImportError:
     torch = None
 
+# --- Logging-Konfiguration ---
+def configure_logging(minimal=False):
+    """Konfiguriert das Logging-Verhalten der Anwendung."""
+    log_level = logging.ERROR if minimal else logging.DEBUG
+    logging.basicConfig(level=log_level, format='[%(levelname)s] %(message)s')
+
 # --- Geräteerkennung ---
 def get_device():
+    """Ermittelt das verwendete Gerät (CPU, CUDA, MPS)."""
     device_env = os.getenv("DEVICE")
     if device_env:
         return device_env
 
-    use_cuda_env = os.getenv("USE_CUDA", "true").lower() == "true"
-    if torch and use_cuda_env and torch.cuda.is_available():
+    if torch.cuda.is_available():
         return "cuda"
-    elif torch and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return "mps"
     return "cpu"
 
-def warn_if_no_gpu():
-    if get_device() == "cpu":
-        print("⚠️  Hinweis: Kein GPU erkannt – Anwendung läuft auf CPU. Für beste Leistung CUDA verwenden.")
 
-# --- Logging-Konfiguration ---
-def configure_logging():
-    minimal = os.getenv("MINIMAL_LOGGING", "false").lower() == "true"
-    if minimal:
-        logging.getLogger().setLevel(logging.ERROR)
-        for mod in ["torch", "transformers", "langchain", "sentence_transformers", "faiss", "streamlit"]:
-            logging.getLogger(mod).setLevel(logging.CRITICAL)
-    else:
-        logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+def warn_if_no_gpu():
+    """Gibt eine Warnung aus, wenn keine GPU verfügbar ist."""
+    if get_device() == "cpu":
+        logging.warning("Kein GPU erkannt – Anwendung läuft auf CPU. Für beste Leistung CUDA verwenden.")
 
 # --- Modellverwaltung für Ollama ---
 def ensure_model_available(model_name):
+    """Stellt sicher, dass das angegebene Ollama-Modell verfügbar ist."""
     try:
         result = subprocess.run(["ollama", "list"], capture_output=True, text=True, check=True)
         if model_name not in result.stdout:
-            print(f"🔄 Lade Ollama-Modell '{model_name}'...")
+            logging.info(f"Lade Ollama-Modell '{model_name}'...")
             subprocess.run(["ollama", "pull", model_name], check=True)
-            print(f"✅ Modell '{model_name}' erfolgreich geladen.")
+            logging.info(f"Modell '{model_name}' erfolgreich geladen.")
         else:
-            print(f"✅ Modell '{model_name}' ist bereits verfügbar.")
+            logging.info(f"Modell '{model_name}' bereits verfügbar.")
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            f"❌ Konnte Modell '{model_name}' nicht über 'ollama' laden oder prüfen.\n"
-            f"Möglicherweise keine Internetverbindung?\n\nTechnischer Fehler:\n{e}"
-        )
+        raise RuntimeError(f"Fehler beim Laden des Modells '{model_name}': {e}")
 
 def ensure_models_available(model_names):
+    """Stellt sicher, dass alle angegebenen Ollama-Modelle verfügbar sind."""
     for model in model_names:
         ensure_model_available(model)
 
 def list_ollama_models():
+    """Listet alle verfügbaren Ollama-Modelle auf."""
     try:
         result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
         lines = result.stdout.strip().splitlines()
@@ -70,25 +70,76 @@ def list_ollama_models():
                 })
         return models
     except Exception as e:
-        print(f"Fehler bei 'ollama list': {e}")
+        logging.error(f"Fehler bei 'ollama list': {e}")
         return []
+
+# --- Erweiterte HTTP-Logging für Ollama API ---
+def call_ollama_api_with_logging(payload):
+    """Führt eine API-Anfrage an Ollama durch und loggt Details."""
+    url = "http://127.0.0.1:11434/api/generate"
+    logging.debug(f"API Anfrage: {payload}")
+
+    try:
+        start_time = time.time()
+        response = requests.post(url, json=payload)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        end_time = time.time()
+        logging.debug(f"Antwort erhalten: {response.status_code}, Zeit: {end_time - start_time:.2f}s")
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Fehler bei der API-Anfrage: {e}")
+        raise RuntimeError(f"Fehler bei der API-Anfrage: {e}")
+
+# --- Retrieval Hilfsfunktionen ---
+def retrieve_docs_with_sources(vectorstore, query, k=10, category=None):
+    """Ruft Dokumente aus dem Vektorstore ab und annotiert sie mit Quelle/Kategorie."""
+    results = vectorstore.similarity_search(query, k=k)
+    return [
+        {
+            "content": doc.page_content,
+            "source": doc.metadata.get("source", "Unbekannt"),
+            "category": doc.metadata.get("category", "Unbekannt")
+        } for doc in results
+        if not category or doc.metadata.get("category") == category
+    ]
+
+def retrieve_bm25_docs(query, category=None):
+    """Optionaler Platzhalter für klassische BM25-Retrieval-Strategie."""
+    # Diese Methode müsste implementiert werden, wenn du sparse Retrieval willst.
+    return []  # Oder entsprechende Logik
+
+def deduplicate_docs(scored_docs):
+    """Entfernt doppelte Dokumente basierend auf Inhalt und Quelle."""
+    seen = set()
+    unique = []
+    for doc, score in scored_docs:
+        key = (doc.get("content"), doc.get("source"))
+        if key not in seen:
+            seen.add(key)
+            unique.append(doc)
+    return unique
 
 # --- Sonstige Hilfsfunktionen ---
 def get_env_var(name, default=None, required=False):
+    """Holt den Wert einer Umgebungsvariable oder wirft einen Fehler, wenn sie erforderlich ist und nicht gesetzt wurde."""
     value = os.getenv(name, default)
     if required and value is None:
-        raise RuntimeError(f"Environment variable '{name}' is required but not set.")
+        raise RuntimeError(f"Umgebungsvariable '{name}' ist erforderlich, aber nicht gesetzt.")
     return value
 
 def get_absolute_path(relative_path):
+    """Gibt den absoluten Pfad zu einem relativen Pfad zurück."""
     return os.path.abspath(relative_path)
 
 def log_rag_action(action, details=""):
+    """Loggt Aktionen im Zusammenhang mit RAG (Retrieval-Augmented Generation)."""
     logging.info(f"[RAG] {action}: {details}")
 
 def update_progress_bar(progress, processed, total, description=""):
+    """Aktualisiert die Fortschrittsanzeige im Streamlit-Frontend."""
     progress.progress(processed / total, text=f"{description} ({processed}/{total})")
 
 def get_default_embeddings_model(model_name="all-MiniLM-L6-v2"):
+    """Lädt das Standardmodell für Text-Embeddings von HuggingFace."""
     from langchain_huggingface import HuggingFaceEmbeddings
     return HuggingFaceEmbeddings(model_name=model_name)
