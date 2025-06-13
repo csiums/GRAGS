@@ -9,11 +9,29 @@ from prompts import CATEGORY_DESCRIPTIONS
 from rag_pipeline import load_or_create_vectorstore, create_vectorstore, load_documents
 from agents import QueryAgent, RetrievalAgent, RankingAgent, AnswerAgent
 from ollama_chain import get_ollama_chain, get_simple_llm
-from ollama_utils import ensure_model_available, configure_logging, get_device, warn_if_no_gpu
+from ollama_utils import ensure_model_available, get_device, warn_if_no_gpu
 
 # --- Setup ---
-configure_logging()
 load_dotenv()
+# --- Human-readable logging setup ---
+HUMAN_READABLE_LOGS = os.getenv("HUMAN_READABLE_LOGS", "false").lower() == "true"
+
+def setup_logging():
+    if HUMAN_READABLE_LOGS:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(message)s"
+        )
+        # Suppress technical DEBUG logs from libraries
+        for noisy_logger in ["httpcore", "httpx", "urllib3"]:
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+    else:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="[%(levelname)s] %(message)s"
+        )
+
+setup_logging()
 selected_model = os.getenv("OLLAMA_MODEL")
 
 ensure_model_available(selected_model)
@@ -78,18 +96,25 @@ st.session_state.answer_agent = answer_agent
 user_input = st.chat_input("Was möchtest du von Goethe wissen?")
 
 # --- Query-Handling ---
+
 def handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_history):
     start = time.time()
-    logging.info(f"Starte die Anfrage: '{user_input}'")
+    logging.info(f"GoetheGPT denkt nach: '{user_input}'")
 
     try:
         # Decompose the query into subqueries
         subqueries = query_agent.decompose_query(user_input, history=chat_history)
+        if not subqueries:
+            logging.warning("Keine Teilfragen erkannt – benutze Originalfrage als Fallback.")
+            subqueries = [user_input]
 
         # Retrieve and rank documents
         docs = []
         for subq in subqueries:
-            docs.extend(retriever.retrieve(subq, category=query_agent.assign_category_with_description(subq, CATEGORY_DESCRIPTIONS)))
+            docs.extend(retriever.retrieve(
+                subq,
+                category=query_agent.assign_category_with_description(subq, CATEGORY_DESCRIPTIONS)
+            ))
 
         # Filter out duplicates
         seen = set()
@@ -105,25 +130,31 @@ def handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_
                 seen.add(key)
                 unique_docs.append(doc)
 
-        logging.info(f"Gefundene Dokumente insgesamt: {len(unique_docs)}")
+        logging.info(f"Insgesamt {len(unique_docs)} relevante Dokumente gefunden.")
 
         top_docs = []
         if unique_docs:
             top_docs = ranker.rerank(unique_docs, user_input, top_k=5)
 
-        if top_docs and isinstance(top_docs[0], tuple):
-            logging.info(f"Top-Dokumente (tuple) an Antwortagenten übergeben.")
-            answer = answer_agent.generate(top_docs, user_input, history=chat_history)
-        elif top_docs and isinstance(top_docs[0], dict):
-            logging.info(f"Top-Dokumente (dict) an Antwortagenten übergeben.")
-            tupleized = [(doc.get("content", ""), doc.get("source", "unbekannt"), doc.get("category", "")) for doc in top_docs]
-            answer = answer_agent.generate(tupleized, user_input, history=chat_history)
+        # --- HIER: IMMER das LLM antworten lassen, auch wenn keine Dokumente ---
+        if top_docs:
+            if isinstance(top_docs[0], tuple):
+                logging.info(f"Die wichtigsten Dokumente werden an GoetheGPT zur Antwortgenerierung übergeben.")
+                answer = answer_agent.generate(top_docs, user_input, history=chat_history)
+            elif isinstance(top_docs[0], dict):
+                logging.info(f"Die wichtigsten Dokumente werden an GoetheGPT zur Antwortgenerierung übergeben.")
+                tupleized = [(doc.get("content", ""), doc.get("source", "unbekannt"), doc.get("category", "")) for doc in top_docs]
+                answer = answer_agent.generate(tupleized, user_input, history=chat_history)
+            else:
+                # Fallback
+                answer = answer_agent.generate([], user_input, history=chat_history)
         else:
-            logging.warning(f"Keine relevanten Dokumente gefunden.")
-            answer = "Ich konnte leider keine relevante Antwort finden."
+            # NEU: IMMER das LLM befragen, auch ohne Dokumente (CLUELESS-LOGIK ist im AnswerAgent!)
+            logging.warning(f"Keine relevanten Dokumente gefunden – generiere trotzdem eine Antwort.")
+            answer = answer_agent.generate([], user_input, history=chat_history)
 
         end = time.time()
-        logging.info(f"Antwort generiert in {end - start:.2f} Sekunden.")
+        logging.info(f"Antwort wurde nach {end - start:.2f} Sekunden erzeugt.")
         return answer, top_docs, subqueries, end - start
 
     except Exception as e:

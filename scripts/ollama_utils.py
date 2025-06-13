@@ -10,11 +10,24 @@ try:
 except ImportError:
     torch = None
 
-# --- Logging-Konfiguration ---
-def configure_logging(minimal=False):
-    """Konfiguriert das Logging-Verhalten der Anwendung."""
-    log_level = logging.ERROR if minimal else logging.DEBUG
-    logging.basicConfig(level=log_level, format='[%(levelname)s] %(message)s')
+from dotenv import load_dotenv
+load_dotenv()
+HUMAN_READABLE_LOGS = os.getenv("HUMAN_READABLE_LOGS", "false").lower() == "true"
+
+def setup_logging():
+    if HUMAN_READABLE_LOGS:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(message)s"
+        )
+        for noisy_logger in ["httpcore", "httpx", "urllib3"]:
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+    else:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="[%(levelname)s] %(message)s"
+        )
+setup_logging()
 
 # --- Geräteerkennung ---
 def get_device():
@@ -22,13 +35,11 @@ def get_device():
     device_env = os.getenv("DEVICE")
     if device_env:
         return device_env
-
-    if torch.cuda.is_available():
+    if torch and torch.cuda.is_available():
         return "cuda"
-    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+    elif torch and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return "mps"
     return "cpu"
-
 
 def warn_if_no_gpu():
     """Gibt eine Warnung aus, wenn keine GPU verfügbar ist."""
@@ -83,9 +94,12 @@ def call_ollama_api_with_logging(payload):
     try:
         start_time = time.time()
         response = requests.post(url, json=payload)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        response.raise_for_status()
         end_time = time.time()
-        logging.debug(f"Antwort erhalten: {response.status_code}, Zeit: {end_time - start_time:.2f}s")
+        if HUMAN_READABLE_LOGS:
+            logging.info(f"Antwort von Ollama erhalten ({end_time - start_time:.2f} Sekunden).")
+        else:
+            logging.debug(f"Antwort erhalten: {response.status_code}, Zeit: {end_time - start_time:.2f}s")
         return response.json()
     except requests.exceptions.RequestException as e:
         logging.error(f"Fehler bei der API-Anfrage: {e}")
@@ -95,6 +109,8 @@ def call_ollama_api_with_logging(payload):
 def retrieve_docs_with_sources(vectorstore, query, k=10, category=None):
     """Ruft Dokumente aus dem Vektorstore ab und annotiert sie mit Quelle/Kategorie."""
     results = vectorstore.similarity_search(query, k=k)
+    if HUMAN_READABLE_LOGS:
+        logging.info(f"Es wurden {len(results)} Dokumente für die Anfrage '{query}' gefunden.")
     return [
         {
             "content": doc.page_content,
@@ -107,7 +123,7 @@ def retrieve_docs_with_sources(vectorstore, query, k=10, category=None):
 def retrieve_bm25_docs(query, category=None):
     """Optionaler Platzhalter für klassische BM25-Retrieval-Strategie."""
     # Diese Methode müsste implementiert werden, wenn du sparse Retrieval willst.
-    return []  # Oder entsprechende Logik
+    return []
 
 def deduplicate_docs(scored_docs):
     """Entfernt doppelte Dokumente basierend auf Inhalt und Quelle."""
@@ -120,7 +136,6 @@ def deduplicate_docs(scored_docs):
             unique.append(doc)
     return unique
 
-# --- Sonstige Hilfsfunktionen ---
 def get_env_var(name, default=None, required=False):
     """Holt den Wert einer Umgebungsvariable oder wirft einen Fehler, wenn sie erforderlich ist und nicht gesetzt wurde."""
     value = os.getenv(name, default)
@@ -134,7 +149,7 @@ def get_absolute_path(relative_path):
 
 def log_rag_action(action, details=""):
     """Loggt Aktionen im Zusammenhang mit RAG (Retrieval-Augmented Generation)."""
-    logging.info(f"[RAG] {action}: {details}")
+    logging.info(f"{action}: {details}")
 
 def update_progress_bar(progress, processed, total, description=""):
     """Aktualisiert die Fortschrittsanzeige im Streamlit-Frontend."""
@@ -145,31 +160,30 @@ def get_default_embeddings_model(model_name="all-MiniLM-L6-v2"):
     from langchain_huggingface import HuggingFaceEmbeddings
     return HuggingFaceEmbeddings(model_name=model_name)
 
-
 def load_cross_encoder_with_cache(hub_model_name, local_model_dir, device="cpu"):
     """
     Attempts to load a CrossEncoder model from HuggingFace Hub; if offline or download fails,
     attempts to load from a local cache directory.
     """
     try:
-        logging.info(f"Trying to load CrossEncoder from HuggingFace Hub: {hub_model_name}")
+        logging.info(f"Versuche CrossEncoder von HuggingFace Hub zu laden: {hub_model_name}")
         model = CrossEncoder(hub_model_name, device=device)
         # Save to cache for future offline use
         if not os.path.exists(local_model_dir):
             model.save(local_model_dir)
         return model
     except Exception as e_hub:
-        logging.warning(f"Could not load model from HuggingFace Hub: {e_hub}")
+        logging.warning(f"Konnte Modell nicht von HuggingFace laden: {e_hub}")
         # Try local cache
         if os.path.exists(local_model_dir):
             try:
-                logging.info(f"Trying to load CrossEncoder from local cache: {local_model_dir}")
+                logging.info(f"Versuche CrossEncoder aus lokalem Cache zu laden: {local_model_dir}")
                 return CrossEncoder(local_model_dir, device=device)
             except Exception as e_local:
-                raise RuntimeError(f"Failed to load model from local cache: {e_local}")
+                raise RuntimeError(f"Lokaler Modell-Cache konnte nicht geladen werden: {e_local}")
         else:
             raise RuntimeError(
-                f"Model could not be loaded from HuggingFace or local cache.\n"
-                f"Error from HuggingFace: {e_hub}\n"
-                f"Local cache '{local_model_dir}' does not exist."
+                f"Modell konnte weder von HuggingFace noch lokal geladen werden.\n"
+                f"Fehler von HuggingFace: {e_hub}\n"
+                f"Lokaler Cache '{local_model_dir}' existiert nicht."
             )

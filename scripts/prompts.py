@@ -14,11 +14,14 @@ Nutze gelegentlich direkte Zitate oder Anspielungen auf deine Werke (z. B. aus
 Antworten dürfen nuanciert, mehrdeutig oder symbolisch sein – wie ein echter Goethe antworten würde.
 
 WICHTIG:
-Nutze ausschließlich die folgenden Quellen für deine Antwort. Zitiere, paraphrasiere oder beziehe dich klar auf sie. Wenn keine passende Information enthalten ist, erkläre dies ausdrücklich und spekuliere nicht.
+Nutze ausschließlich die folgenden Quellen für deine Antwort. Zitiere, paraphrasiere oder beziehe dich klar auf sie. 
+Wenn **keine passende Information** in den Quellen enthalten ist, erkläre dies ausdrücklich und spekuliere oder philosophiere höflich im Stil Goethes, ohne moderne Begriffe.
 
 ---
+CHATVERLAUF (zur Orientierung):
+{chat_history}
 
-KONTEXT:
+KONTEXT (Quellen):
 {context}
 
 FRAGE:
@@ -29,9 +32,9 @@ ANTWORT:
 
 # --- Prompt zur Zerlegung komplexer Fragen ---
 SUBQUESTION_PROMPT = """
-Zerlege die folgende komplexe Frage in maximal drei sinnvolle Teilfragen.
-Die Teilfragen sollen eigenständig verständlich sein, ein Fragezeichen enthalten und sich inhaltlich voneinander unterscheiden.
-Gib nur die Fragen an – nummeriert mit 1., 2., 3.
+Zerlege die folgende komplexe Frage in maximal drei eigenständige, sinnvolle Teilfragen.
+Jede Teilfrage muss ein Fragezeichen enthalten und sich inhaltlich von den anderen unterscheiden.
+Gib nur die Fragen an – nummeriert mit 1., 2., 3. Keine weiteren Kommentare oder Erklärungen.
 
 Frage: {question}
 
@@ -41,38 +44,43 @@ Teilfragen:
 
 # --- Prompt zur Kategorisierung ---
 CATEGORY_ASSIGNMENT_PROMPT = """
-Ordne folgende Teilfrage der passendsten Kategorie zu – auch wenn sie nur indirekt passt.
-Wenn du unsicher bist, wähle diejenige Kategorie, die am ehesten zutrifft.
+Ordne die folgende Teilfrage exakt einer der untenstehenden Kategorien zu.
+Antwortvorgabe: Gib AUSSCHLIESSLICH den Namen einer Kategorie zurück, ohne weitere Worte, Erklärungen oder Zeichen.
+Falls keine Kategorie passt, gib "Keine" zurück.
 
 Teilfrage: "{subquery}"
 
 Kategorien:
 {categories_prompt}
 
-Zugeordnete Kategorie (nur eine):
+Antwort (nur Kategoriename, z. B. Werke):
 """
 
 # --- Prompt zur Query-Erweiterung (Hybrides Retrieval) ---
 EXPAND_QUERY_PROMPT = """
-Nenne alternative Formulierungen oder Synonyme für folgende Frage, um mehr relevante Dokumente zu finden.
-Gib maximal 3 Varianten als Liste zurück.
+Nenne 1–3 alternative möglichst kurze Formulierungen oder Synonyme für folgende Frage, um mehr relevante Dokumente zu finden.
+Gib NUR einzelne, kurze Varianten als Liste mit '- ' beginnend, KEINE vollständigen Antworten, Erklärungen oder Sätze.
 
 Frage: "{query}"
 
 Varianten:
--
+- 
 """
 
 # --- Prompt zur hypothetischen Antwort (HyDE) ---
-HYDE_PROMPT = """Formuliere eine mögliche, kurze Antwort auf folgende Frage:
+HYDE_PROMPT = """
+Formuliere eine mögliche, kurze Antwort auf folgende Frage.
+Antwort: Nicht mehr als drei Sätze. Keine weiteren Kommentare.
 
 Frage: {query}
 
-Antwort (nicht mehr als drei Sätze):
+Antwort:
 """
 
 # --- Prompt zur Stilbewertung (Goethehaftigkeit) ---
-STYLE_SCORE_PROMPT = """Bewerte den Stil des folgenden Textes auf einer Skala von 1 (nicht goethehaft) bis 10 (sehr goethehaft).
+STYLE_SCORE_PROMPT = """
+Bewerte den Stil des folgenden Textes auf einer Skala von 1 (nicht goethehaft) bis 10 (sehr goethehaft).
+Antwort: Gib NUR die Zahl zurück, ohne weitere Worte, Zeichen oder Erklärungen.
 
 Text:
 \"\"\"{text}\"\"\"
@@ -80,7 +88,7 @@ Text:
 Frage:
 {text_prompt}
 
-Antwort: Gib nur die Zahl zurück, ohne weitere Worte oder Erklärungen.
+Antwort (nur Zahl, z. B. 7):
 """
 
 # --- Beschreibung der verfügbaren Kategorien ---
@@ -112,12 +120,21 @@ def get_random_style_prompt(category=None):
         base_prompt + "\nAntworte diesmal besonders kurz und prägnant.",
         base_prompt + "\nNutze viele Metaphern und Bilder.",
         base_prompt + "\nFormuliere poetisch und mit Melancholie.",
+        base_prompt + "\nStelle mehr Fragen als Antworten, wie es ein Suchender tun würde.",
     ]
     return random.choice(variations)
 
-
+# --- Default-Konversations-Auftakt ---
 GOETHE_DEFAULT_HISTORY = (
     "Dies ist der Beginn eines Gesprächs über Johann Wolfgang von Goethe, "
     "sein Werk, seine Zeit und sein Leben. "
     "Bitte beantworte alle Fragen sachlich und im Geiste Goethes."
 )
+
+CLUELESS_PROMPT = """
+Du bist Johann Wolfgang von Goethe. Leider findest du in deinen Archiven keine Informationen zur folgenden Frage:
+
+"{question}"
+
+Erkläre dies ehrlich, aber antworte trotzdem im Stil Goethes: Ziehe Parallelen, philosophiere, nutze Analogien, Metaphern oder Zitate aus deinem Werk, ohne zu behaupten, du wüsstest die Antwort sicher. Sprich, wie es ein Dichter tun würde, wenn er das Offene befragen muss.
+"""

@@ -1,8 +1,28 @@
 import os
+import logging
 from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 from ollama_utils import get_device, ensure_model_available
 from prompts import OLLAMA_SYSTEM_PROMPT
+
+from dotenv import load_dotenv
+load_dotenv()
+HUMAN_READABLE_LOGS = os.getenv("HUMAN_READABLE_LOGS", "false").lower() == "true"
+
+def setup_logging():
+    if HUMAN_READABLE_LOGS:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(message)s"
+        )
+        for noisy_logger in ["httpcore", "httpx", "urllib3"]:
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+    else:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="[%(levelname)s] %(message)s"
+        )
+setup_logging()
 
 # --- Modellparameter aus Umgebungsvariablen ---
 def get_model_params():
@@ -32,7 +52,10 @@ def get_ollama_chain(model_name=None, device=None):
     if model_name is None:
         model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
     mode = device or get_device()
-    print(f"LLM läuft im Modus: {mode.upper()}")
+    if HUMAN_READABLE_LOGS:
+        logging.info(f"LLM läuft im Modus: {mode.upper()}")
+    else:
+        print(f"LLM läuft im Modus: {mode.upper()}")
 
     llm = OllamaLLM(
         model=model_name,

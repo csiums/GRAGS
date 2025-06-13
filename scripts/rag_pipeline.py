@@ -9,15 +9,32 @@ from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-from ollama_utils import configure_logging
+import logging
+
+import dotenv
+dotenv.load_dotenv()
+HUMAN_READABLE_LOGS = os.getenv("HUMAN_READABLE_LOGS", "false").lower() == "true"
+
+def setup_logging():
+    if HUMAN_READABLE_LOGS:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(message)s"
+        )
+        for noisy_logger in ["httpcore", "httpx", "urllib3"]:
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+    else:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="[%(levelname)s] %(message)s"
+        )
+
+setup_logging()
 
 # --- Konstanten für Speicherpfade ---
 DOCS_PATH = "rag/docs"
 CACHE_PATH = "rag/index"
 METADATA_FILE = os.path.join(CACHE_PATH, "file_metadata.pkl")
-
-# --- Logging ---
-configure_logging()
 
 # --- Metadaten: Prüfen, ob sich Dateien verändert haben ---
 def get_file_metadata():
@@ -80,40 +97,53 @@ def load_documents():
             progress.progress(processed_files / total_files, text=f"📄 {filename} geladen ({processed_files}/{total_files})")
 
     progress.progress(1.0, text="✅ Alle Dokumente geladen.")
+    logging.info(f"{len(docs)} Dokumente wurden erfolgreich geladen.")
     return docs
 
-# --- Vektorstore erstellen ---
+
+    # --- Vektorstore erstellen ---
 def create_vectorstore(docs):
+    logging.info("Erstelle Vektorstore aus den geladenen Dokumenten...")
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name="llm_models/all-MiniLM-L6-v2")
     vectorstore = FAISS.from_documents(chunks, embeddings)
     vectorstore.save_local(CACHE_PATH)
     save_file_metadata()
+    logging.info("Vektorstore wurde gespeichert.")
     return vectorstore
 
 # --- Vektorstore laden oder neu erstellen ---
 def load_or_create_vectorstore():
     if is_cache_valid():
+        logging.info("Lade bestehenden Vektorstore (Cache ist gültig).")
         return FAISS.load_local(
             CACHE_PATH,
-            HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
+            HuggingFaceEmbeddings(model_name="llm_models/all-MiniLM-L6-v2"),
             allow_dangerous_deserialization=True
         )
     else:
+        logging.info("Kein gültiger Cache gefunden. Dokumente werden neu geladen und Vektorstore wird erstellt.")
         docs = load_documents()
         return create_vectorstore(docs)
 
 # --- Dokumentensuche im Vektorstore ---
 def retrieve_docs_with_sources(vstore, query, k=4, category=None):
-    results = vstore.similarity_search(query, k=50)  # Erhöhe k, um mehr Ergebnisse zu erhalten
-    print(f"[RAG] Gefundene Dokumente ohne Filter: {len(results)}")
+    results = vstore.similarity_search(query, k=50)
+    if HUMAN_READABLE_LOGS:
+        logging.info(f"Suche nach '{query}' ergab {len(results)} ungefilterte Dokumente.")
+    else:
+        print(f"[RAG] Gefundene Dokumente ohne Filter: {len(results)}")
 
     if category:
         results = [doc for doc in results if doc.metadata.get("category") == category]
-        print(f"[RAG] Gefundene Dokumente nach Filter: {len(results[:k])}")
+        if HUMAN_READABLE_LOGS:
+            logging.info(f"{len(results[:k])} Dokumente passen zur Kategorie '{category}'.")
+        else:
+            print(f"[RAG] Gefundene Dokumente nach Filter: {len(results[:k])}")
     else:
-        print(f"[RAG] Gefundene Dokumente ohne Filter: {len(results)}")
+        if not HUMAN_READABLE_LOGS:
+            print(f"[RAG] Gefundene Dokumente ohne Filter: {len(results)}")
 
     return [
         (doc.page_content, doc.metadata.get("source", "unbekannt"), doc.metadata.get("category", "unbekannt"))
