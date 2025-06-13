@@ -32,12 +32,6 @@ if ! command -v git-lfs &> /dev/null; then
   git lfs install
 fi
 
-# Model download (if not already present)
-mkdir -p llm_models
-if [ ! -d "llm_models/bge_reranker_base" ]; then
-  git clone https://huggingface.co/BAAI/bge-reranker-base llm_models/bge_reranker_base
-fi
-
 # Python 3.10 setup
 PYTHON_BIN=python3.10
 if ! command -v $PYTHON_BIN &> /dev/null; then
@@ -91,12 +85,25 @@ export PYTHONPATH=./scripts:$PYTHONPATH
 # Check for GPU warning
 python -c "from scripts.ollama_utils import warn_if_no_gpu; warn_if_no_gpu()"
 
-# Ensure models are available
+# Ensure Ollama models are available
 python -c "
 from scripts.ollama_utils import ensure_models_available
 import os
 models = [os.getenv('OLLAMA_MODEL', 'llama3.2')]
 ensure_models_available(models)
+"
+
+# Download and cache the HuggingFace CrossEncoder model using Python
+python -c "
+from sentence_transformers import CrossEncoder
+import os
+local_dir = 'llm_models/bge_reranker_base'
+if not os.path.exists(local_dir):
+    print('Downloading and caching BAAI/bge-reranker-base...')
+    model = CrossEncoder('BAAI/bge-reranker-base')
+    model.save(local_dir)
+else:
+    print('Model already cached locally.')
 "
 
 # Create or load the vectorstore

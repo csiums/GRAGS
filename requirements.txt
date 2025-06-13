@@ -27,4 +27,4 @@ faiss-cpu==1.7.1  # Für CPU-only, direkt per pip installierbar
 # faiss-gpu==1.7.1  # Für GPU, nur wenn du ein passendes System und CUDA hast
 
 # PyTorch (siehe Installationshinweis unten)
-torch==2.0.1  # Für CPU oder CUDA-Umgebung, Details siehe README
+torch==2.1.0  # Für CPU oder CUDA-Umgebung, Details siehe README
