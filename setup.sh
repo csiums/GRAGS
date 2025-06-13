@@ -12,7 +12,7 @@ fi
 
 # --- Ensure git-lfs is installed (Fedora/openSUSE/Arch/Alpine/Ubuntu) ---
 if ! command -v git-lfs &> /dev/null; then
-  echo "🔄 git-lfs not found. Installing..."
+  echo "git-lfs not found. Installing..."
 
   if command -v dnf &> /dev/null; then
     sudo dnf install -y git-lfs
@@ -37,28 +37,23 @@ if [ ! -d "llm_models/bge_reranker_base" ]; then
   git clone https://huggingface.co/BAAI/bge-reranker-base llm_models/bge_reranker_base
 fi
 
-# Example: Download other Hugging Face models as needed
-# if [ ! -d "llm_models/bge_base_en_v1.5" ]; then
-#   git clone https://huggingface.co/BAAI/bge-base-en-v1.5 llm_models/bge_base_en_v1.5
-# fi
-
 # --- Install Python dependencies ---
 pip install -r requirements.txt
 
 # --- Check for and install Ollama if missing ---
 if ! command -v ollama &> /dev/null; then
-  echo "🔄 Ollama not found. Installing via official script..."
+  echo "Ollama not found. Installing via official script..."
   curl -fsSL https://ollama.com/install.sh | sh
   echo ""
-  echo "✅ Ollama installed."
-  echo "👉 Please run: exec \$SHELL"
-  echo "   Or restart your terminal so the 'ollama' command becomes available in PATH."
+  echo "Ollama installed."
+  echo "Please run: exec \$SHELL"
+  echo "Or restart your terminal so the 'ollama' command becomes available in PATH."
   exit 1
 fi
 
 # --- Pull Ollama model(s) ---
 if [ -z "$OLLAMA_MODEL" ]; then
-  echo "❌ OLLAMA_MODEL environment variable not set in .env"
+  echo "OLLAMA_MODEL environment variable not set in .env"
   exit 1
 fi
 ollama pull "$OLLAMA_MODEL"
@@ -81,4 +76,4 @@ load_or_create_vectorstore()
 "
 
 echo ""
-echo "✅ Setup complete. All models are now available locally for offline use."
+echo "Setup complete. All models are now available locally for offline use."
