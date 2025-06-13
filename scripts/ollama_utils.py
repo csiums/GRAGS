@@ -122,7 +122,6 @@ def retrieve_docs_with_sources(vectorstore, query, k=10, category=None):
 
 def retrieve_bm25_docs(query, category=None):
     """Optionaler Platzhalter für klassische BM25-Retrieval-Strategie."""
-    # Diese Methode müsste implementiert werden, wenn du sparse Retrieval willst.
     return []
 
 def deduplicate_docs(scored_docs):
@@ -168,13 +167,11 @@ def load_cross_encoder_with_cache(hub_model_name, local_model_dir, device="cpu")
     try:
         logging.info(f"Versuche CrossEncoder von HuggingFace Hub zu laden: {hub_model_name}")
         model = CrossEncoder(hub_model_name, device=device)
-        # Save to cache for future offline use
         if not os.path.exists(local_model_dir):
             model.save(local_model_dir)
         return model
     except Exception as e_hub:
         logging.warning(f"Konnte Modell nicht von HuggingFace laden: {e_hub}")
-        # Try local cache
         if os.path.exists(local_model_dir):
             try:
                 logging.info(f"Versuche CrossEncoder aus lokalem Cache zu laden: {local_model_dir}")
