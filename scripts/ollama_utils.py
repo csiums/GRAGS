@@ -10,10 +10,6 @@ except ImportError:
 
 # --- Device Management ---
 def get_device():
-    """
-    Detect the best device for computation based on environment variables and hardware availability.
-    Priority: DEVICE env > CUDA > MPS (Apple Silicon) > CPU.
-    """
     device_env = os.getenv("DEVICE")
     if device_env:
         return device_env
@@ -26,19 +22,12 @@ def get_device():
 
 
 def warn_if_no_gpu():
-    """
-    Print a warning if no GPU is detected and computations will run on the CPU.
-    """
     if get_device() == "cpu":
-        print("⚠️ Warning: No GPU detected. Running on CPU. For best performance, use a machine with CUDA.")
+        print("Warning: No GPU detected. Running on CPU. For best performance, use a machine with CUDA.")
 
 
 # --- Logging Configuration ---
 def configure_logging():
-    """
-    Configure logging levels based on environment variables.
-    Minimal logging reduces verbosity for production environments.
-    """
     minimal = os.getenv("MINIMAL_LOGGING", "false").lower() == "true"
     if minimal:
         logging.getLogger().setLevel(logging.ERROR)
@@ -66,9 +55,6 @@ def ensure_model_available(model_name):
 
 
 def list_ollama_models():
-    """
-    List all locally available Ollama models with their metadata.
-    """
     try:
         result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
         lines = result.stdout.strip().splitlines()
@@ -89,18 +75,12 @@ def list_ollama_models():
 
 
 def ensure_models_available(model_names):
-    """
-    Ensure a list of Ollama models are available locally.
-    """
     for model in model_names:
         ensure_model_available(model)
 
 
 # --- Utility Functions ---
 def get_env_var(name, default=None, required=False):
-    """
-    Retrieve an environment variable with optional default and required flag.
-    """
     value = os.getenv(name, default)
     if required and value is None:
         raise RuntimeError(f"Environment variable '{name}' is required but not set.")
@@ -108,29 +88,17 @@ def get_env_var(name, default=None, required=False):
 
 
 def get_absolute_path(relative_path):
-    """
-    Get the absolute path for a given relative path.
-    """
     return os.path.abspath(relative_path)
 
 
 def log_rag_action(action, details=""):
-    """
-    Log RAG pipeline actions in a standardized format.
-    """
     logging.info(f"[RAG] {action}: {details}")
 
 
 def update_progress_bar(progress, processed, total, description=""):
-    """
-    Update a Streamlit progress bar with percentage and description.
-    """
     progress.progress(processed / total, text=f"{description} ({processed}/{total})")
 
 
 def get_default_embeddings_model(model_name="all-MiniLM-L6-v2"):
-    """
-    Load the default embeddings model for the vectorstore.
-    """
     from langchain_huggingface import HuggingFaceEmbeddings
     return HuggingFaceEmbeddings(model_name=model_name)
