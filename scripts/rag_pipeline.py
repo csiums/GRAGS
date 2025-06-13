@@ -19,9 +19,6 @@ configure_logging()
 
 # --- Metadata Management ---
 def get_file_metadata():
-    """
-    Retrieve metadata (last modified times) for all files in the DOCS_PATH.
-    """
     metadata = {}
     for root, dirs, files in os.walk(DOCS_PATH):
         for f in files:
@@ -31,9 +28,6 @@ def get_file_metadata():
 
 
 def is_cache_valid():
-    """
-    Check if the cache is valid by comparing stored file metadata with the current metadata.
-    """
     if not os.path.exists(METADATA_FILE):
         return False
     with open(METADATA_FILE, "rb") as f:
@@ -43,18 +37,12 @@ def is_cache_valid():
 
 
 def save_file_metadata():
-    """
-    Save the current file metadata to the METADATA_FILE.
-    """
     with open(METADATA_FILE, "wb") as f:
         pickle.dump(get_file_metadata(), f)
 
 
 # --- Document Loading ---
 def load_documents():
-    """
-    Load documents from DOCS_PATH, supporting .txt, .md, .pdf, and .xml formats.
-    """
     docs = []
     categories = [d for d in os.listdir(DOCS_PATH) if os.path.isdir(os.path.join(DOCS_PATH, d))]
     total_files = sum(len(os.listdir(os.path.join(DOCS_PATH, c))) for c in categories)
@@ -98,9 +86,6 @@ def load_documents():
 
 # --- Vectorstore Management ---
 def create_vectorstore(docs):
-    """
-    Create a FAISS vectorstore from documents, saving it locally for future use.
-    """
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -111,9 +96,6 @@ def create_vectorstore(docs):
 
 
 def load_or_create_vectorstore():
-    """
-    Load an existing vectorstore if the cache is valid; otherwise, recreate it from the documents.
-    """
     if is_cache_valid():
         return FAISS.load_local(
             CACHE_PATH,
@@ -127,10 +109,6 @@ def load_or_create_vectorstore():
 
 # --- Document Retrieval ---
 def retrieve_docs_with_sources(vstore, query, k=4, category=None):
-    """
-    Retrieve the top-k most relevant documents from the vectorstore for a given query.
-    Optionally filter by category.
-    """
     results = vstore.similarity_search(query, k=20)
     if category:
         results = [doc for doc in results if doc.metadata.get("category") == category]
@@ -141,9 +119,6 @@ def retrieve_docs_with_sources(vstore, query, k=4, category=None):
 
 # --- Utility ---
 def get_last_modified():
-    """
-    Get the last modified time of any file in the DOCS_PATH.
-    """
     return max(
         os.path.getmtime(os.path.join(root, f))
         for root, dirs, files in os.walk(DOCS_PATH)
