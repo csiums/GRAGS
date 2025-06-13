@@ -7,19 +7,11 @@ from prompts import (
 )
 
 class QueryAgent:
-    """
-    Handles the decomposition of user questions and categorization of sub-questions.
-    """
-
     def __init__(self, llm):
         self.llm = llm
         self.thoughts = []
 
     def decompose_question(self, question):
-        """
-        Decomposes a complex question into up to three sub-questions.
-        Returns a list of sub-questions.
-        """
         prompt = SUBQUESTION_PROMPT.format(question=question)
         response = self.llm.invoke(prompt)
         subqueries = re.findall(r"\d+\.\s*(.+?)\s*(?=\n|$)", response)
@@ -31,10 +23,6 @@ class QueryAgent:
         return subqueries
 
     def assign_category_with_description(self, subquery, category_descriptions):
-        """
-        Assigns a category to a sub-question using the provided category descriptions.
-        Returns the category name or None if no category matched.
-        """
         categories_prompt = "\n".join(
             [f"- {cat}: {desc}" for cat, desc in category_descriptions.items()]
         )
@@ -56,29 +44,17 @@ class QueryAgent:
             return category
 
 class RetrievalAgent:
-    """
-    Handles query expansion, retrieval, and hypothetical answer generation.
-    """
-
     def __init__(self, vectorstore, llm):
         self.vectorstore = vectorstore
         self.llm = llm
         self.thoughts = []
 
     def expand_query(self, query):
-        """
-        Suggests alternative phrasings or synonyms for a query.
-        Returns a list of variants.
-        """
         prompt = EXPAND_QUERY_PROMPT.format(query=query)
         response = self.llm.invoke(prompt)
         return re.findall(r"-\s*(.+)", response)
 
     def retrieve(self, query, k=10, category=None, sparse_weight=0.3):
-        """
-        Retrieves documents relevant to the (expanded) query from the vectorstore.
-        If no results, generates a hypothetical answer using the Hyde prompt.
-        """
         queries = [query] + self.expand_query(query)
         dense_docs = []
         for q in queries:
@@ -99,26 +75,11 @@ class RetrievalAgent:
         return unique_docs, None
 
 class RankingAgent:
-    """
-    Handles ranking of retrieved documents using LLM relevance scoring.
-    """
-
     def __init__(self, llm):
         self.llm = llm
         self.thoughts = []
 
     def rank(self, docs, question, top_k=5):
-        """
-        Ranks documents by relevance to the question using the LLM.
-
-        Args:
-            docs (list): List of document dicts with 'content' key.
-            question (str): The user's query/question.
-            top_k (int): Number of top documents to return.
-
-        Returns:
-            List of docs sorted by LLM-assessed relevance (highest first).
-        """
         if not docs:
             return []
 
@@ -132,29 +93,20 @@ class RankingAgent:
             )
             try:
                 score_str = self.llm.invoke(prompt).strip()
-                score = int(score_str.split()[0])  # In case LLM returns "5 Sehr relevant" etc.
+                score = int(score_str.split()[0])
             except Exception:
-                score = 1  # fallback: minimal relevance
+                score = 1
             scored_docs.append((score, doc))
             self.thoughts.append(f"Doc {i}: Score {score}")
 
-        # Sort by score descending, return top_k docs
         scored_docs.sort(reverse=True, key=lambda x: x[0])
         ranked_docs = [doc for (score, doc) in scored_docs][:top_k]
         return ranked_docs
 
 class AnswerAgent:
-    """
-    Handles answer synthesis using the LLM.
-    """
-
     def __init__(self, llm):
         self.llm = llm
         self.thoughts = []
 
     def synthesize_answer(self, context, question):
-        """
-        Generates an answer using the provided context and question.
-        """
-        # The actual prompt is handled by the ollama_chain's prompt template.
         return self.llm.invoke({"context": context, "question": question})
