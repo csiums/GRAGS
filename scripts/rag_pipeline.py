@@ -91,12 +91,12 @@ def load_documents():
                     docs.append(doc)
 
             except Exception as e:
-                st.warning(f"⚠️ Fehler beim Laden von {filename}: {e}")
+                st.warning(f"Fehler beim Laden von {filename}: {e}")
 
             processed_files += 1
             progress.progress(processed_files / total_files, text=f"📄 {filename} geladen ({processed_files}/{total_files})")
 
-    progress.progress(1.0, text="✅ Alle Dokumente geladen.")
+    progress.progress(1.0, text="Alle Dokumente geladen.")
     logging.info(f"{len(docs)} Dokumente wurden erfolgreich geladen.")
     return docs
 
