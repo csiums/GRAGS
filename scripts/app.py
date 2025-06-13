@@ -22,7 +22,6 @@ def setup_logging():
             level=logging.INFO,
             format="%(message)s"
         )
-        # Suppress technical DEBUG logs from libraries
         for noisy_logger in ["httpcore", "httpx", "urllib3"]:
             logging.getLogger(noisy_logger).setLevel(logging.WARNING)
     else:
@@ -42,7 +41,6 @@ with open("styles.css") as f:
 
 st.title("GoetheGPT")
 
-# Buttons zum Neustarten oder Index neu erstellen
 col1, col2 = st.columns(2)
 with col1:
     if st.button("Neue Unterhaltung beginnen"):
@@ -80,7 +78,6 @@ if "llm_chain" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Agenten initialisieren
 utility_llm = get_simple_llm(selected_model, device=get_device())
 query_agent = QueryAgent(llm=utility_llm)
 retriever = RetrievalAgent(st.session_state.vectorstore, utility_llm)
@@ -102,13 +99,11 @@ def handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_
     logging.info(f"GoetheGPT denkt nach: '{user_input}'")
 
     try:
-        # Decompose the query into subqueries
         subqueries = query_agent.decompose_query(user_input, history=chat_history)
         if not subqueries:
             logging.warning("Keine Teilfragen erkannt – benutze Originalfrage als Fallback.")
             subqueries = [user_input]
 
-        # Retrieve and rank documents
         docs = []
         for subq in subqueries:
             docs.extend(retriever.retrieve(
@@ -116,7 +111,6 @@ def handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_
                 category=query_agent.assign_category_with_description(subq, CATEGORY_DESCRIPTIONS)
             ))
 
-        # Filter out duplicates
         seen = set()
         unique_docs = []
         for doc in docs:
@@ -136,7 +130,6 @@ def handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_
         if unique_docs:
             top_docs = ranker.rerank(unique_docs, user_input, top_k=5)
 
-        # --- HIER: IMMER das LLM antworten lassen, auch wenn keine Dokumente ---
         if top_docs:
             if isinstance(top_docs[0], tuple):
                 logging.info(f"Die wichtigsten Dokumente werden an GoetheGPT zur Antwortgenerierung übergeben.")
@@ -146,10 +139,8 @@ def handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_
                 tupleized = [(doc.get("content", ""), doc.get("source", "unbekannt"), doc.get("category", "")) for doc in top_docs]
                 answer = answer_agent.generate(tupleized, user_input, history=chat_history)
             else:
-                # Fallback
                 answer = answer_agent.generate([], user_input, history=chat_history)
         else:
-            # NEU: IMMER das LLM befragen, auch ohne Dokumente (CLUELESS-LOGIK ist im AnswerAgent!)
             logging.warning(f"Keine relevanten Dokumente gefunden – generiere trotzdem eine Antwort.")
             answer = answer_agent.generate([], user_input, history=chat_history)
 
@@ -173,7 +164,6 @@ if user_input:
 
         answer, top_docs, subqueries, duration = handle_query(user_input, query_agent, retriever, ranker, answer_agent, chat_history)
 
-        # Ergebnisse im Verlauf speichern
         st.session_state.history.append({
             "frage": user_input,
             "antwort": answer,
@@ -188,7 +178,6 @@ if user_input:
             "dauer": f"Antwortzeit: {duration:.2f} Sekunden"
         })
 
-        # Gedanken löschen für die nächste Anfrage
         query_agent.thoughts.clear()
         retriever.thoughts.clear()
         ranker.thoughts.clear()
