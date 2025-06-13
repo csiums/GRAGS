@@ -34,7 +34,52 @@ if [ ! -d "llm_models/bge_reranker_base" ]; then
   git clone https://huggingface.co/BAAI/bge-reranker-base llm_models/bge_reranker_base
 fi
 
-pip install -r requirements.txt
+# ---- Python 3.10 and venv setup ----
+PYTHON_BIN=python3.10
+if ! command -v $PYTHON_BIN &> /dev/null; then
+  echo "Python 3.10 not found, attempting to install..."
+  if command -v apt-get &> /dev/null; then
+    sudo apt-get update
+    sudo apt-get install -y software-properties-common
+    sudo add-apt-repository -y ppa:deadsnakes/ppa
+    sudo apt-get update
+    sudo apt-get install -y python3.10 python3.10-venv python3.10-dev
+  elif command -v dnf &> /dev/null; then
+    sudo dnf install -y python3.10
+  elif command -v zypper &> /dev/null; then
+    sudo zypper install -y python310
+  elif command -v pacman &> /dev/null; then
+    sudo pacman -Sy --noconfirm python310
+  else
+    echo "Cannot install Python 3.10 automatically. Please install it manually."
+    exit 1
+  fi
+fi
+
+if [ ! -d ".venv" ]; then
+  $PYTHON_BIN -m venv .venv
+fi
+source .venv/bin/activate
+
+# ---- pip upgrade ----
+pip install --upgrade pip
+
+# ---- Conditional FAISS install ----
+# Remove faiss-cpu/faiss-gpu from requirements.txt for this step!
+grep -vE '^faiss-(cpu|gpu)' requirements.txt > requirements_nofaiss.txt
+
+# Detect NVIDIA GPU
+if command -v nvidia-smi &> /dev/null; then
+  echo "NVIDIA GPU detected. Installing faiss-gpu..."
+  pip install "faiss-gpu>=1.7.4" || { echo "faiss-gpu install failed, falling back to faiss-cpu"; pip install "faiss-cpu>=1.7.4"; }
+else
+  echo "No NVIDIA GPU detected. Installing faiss-cpu..."
+  pip install "faiss-cpu>=1.7.4"
+fi
+
+# ---- Remaining requirements ----
+pip install -r requirements_nofaiss.txt
+rm requirements_nofaiss.txt
 
 if ! command -v ollama &> /dev/null; then
   echo "Ollama not found. Installing via official script..."
@@ -54,16 +99,16 @@ ollama pull "$OLLAMA_MODEL"
 
 export PYTHONPATH=./scripts:$PYTHONPATH
 
-python3 -c "from ollama_utils import warn_if_no_gpu; warn_if_no_gpu()"
+python -c "from ollama_utils import warn_if_no_gpu; warn_if_no_gpu()"
 
-python3 -c "
+python -c "
 from ollama_utils import ensure_models_available
 import os
 models = [os.getenv('OLLAMA_MODEL', 'llama3.2')]
 ensure_models_available(models)
 "
 
-python3 -c "
+python -c "
 from rag_pipeline import load_or_create_vectorstore
 load_or_create_vectorstore()
 "
