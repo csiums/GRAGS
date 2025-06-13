@@ -4,22 +4,26 @@ import os
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 
-st.set_page_config(page_title="GoetheGPT", layout="centered")
-
+from prompts import (
+    CATEGORY_DESCRIPTIONS,
+    APP_CAPTION,
+    REBUILD_INDEX_SPINNER,
+    REBUILD_INDEX_SUCCESS,
+    LOAD_MEMORY_SPINNER,
+)
 from rag_pipeline import load_or_create_vectorstore, create_vectorstore, load_documents
 from agents import QueryAgent, RetrievalAgent, RankingAgent, AnswerAgent
 from ollama_chain import get_ollama_chain, get_simple_llm
 from ollama_utils import ensure_model_available, configure_logging, get_device, warn_if_no_gpu
+
+st.set_page_config(page_title="GoetheGPT", layout="centered")
 
 # --- Setup ---
 configure_logging()
 load_dotenv()
 selected_model = os.getenv("OLLAMA_MODEL")
 
-# Ensure that the model is available locally
 ensure_model_available(selected_model)
-
-# Warn the user if no GPU is available
 warn_if_no_gpu()
 
 # Load external styles
@@ -32,20 +36,15 @@ with col1:
     if st.button("Neue Unterhaltung beginnen"):
         st.session_state.history = []
         st.rerun()
-
 with col2:
     if st.button("Dokumentenindex neu erstellen"):
-        with st.spinner("Rebuild: Dokumente werden neu eingelesen..."):
+        with st.spinner(REBUILD_INDEX_SPINNER):
             docs = load_documents()
             vectorstore = create_vectorstore(docs)
             st.session_state.vectorstore = vectorstore
-            st.success("Index wurde erfolgreich neu aufgebaut.")
+            st.success(REBUILD_INDEX_SUCCESS)
 
-st.caption(
-    "GoetheGPT ist eine dokumentengestützte KI-Anwendung, die vollständig lokal und datenschutzfreundlich arbeitet. "
-    "Sie gibt nachvollziehbare Antworten, indem sie Zitate aus den Quellen sichtbar macht und ihre Gedankengänge offenlegt. "
-    "Im Unterschied zu kommerziellen Sprachassistenten bleibt alles transparent, offline und unter eigener Kontrolle."
-)
+st.caption(APP_CAPTION)
 
 col1, col2 = st.columns(2)
 with col1:
@@ -53,18 +52,9 @@ with col1:
 with col2:
     st.markdown(f"**Gerätemodus:** `{get_device()}`")
 
-# --- Categories & Descriptions ---
-CATEGORY_DESCRIPTIONS = {
-    "Biographie": "Informationen zu Goethes Leben, persönliche Hintergründe, Reisen und biografische Ereignisse.",
-    "Briefe": "Briefwechsel und persönliche Korrespondenz Goethes mit Freunden, Bekannten und bedeutenden Persönlichkeiten seiner Zeit.",
-    "Weltwissen": "Goethes wissenschaftliche Erkenntnisse, philosophische Betrachtungen und seine Beschäftigung mit Natur, Farbenlehre und allgemeinem Wissen.",
-    "Werke": "Literarische Werke Goethes, darunter Gedichte, Dramen, Romane und Essays, wie Faust, Werther, West-östlicher Divan und mehr.",
-    "Werkdeutung": "Literaturwissenschaftliche Sekundärliteratur verschiedener Experten auf Goethes Werk."
-}
-
 # --- Init Session ---
 if "vectorstore" not in st.session_state:
-    with st.spinner("Lade Goethes Gedächtnis..."):
+    with st.spinner(LOAD_MEMORY_SPINNER):
         st.session_state.vectorstore = load_or_create_vectorstore()
 
 if "llm_chain" not in st.session_state:
@@ -77,8 +67,8 @@ if "history" not in st.session_state:
 utility_llm = get_simple_llm(selected_model, device=get_device())
 query_agent = QueryAgent(llm=utility_llm)
 retriever = RetrievalAgent(st.session_state.vectorstore, utility_llm)
-ranker = RankingAgent(llm=st.session_state.llm_chain)
-answer_agent = AnswerAgent(selected_model, device=get_device())
+ranker = RankingAgent(llm=utility_llm)
+answer_agent = AnswerAgent(st.session_state.llm_chain)
 
 st.session_state.query_agent = query_agent
 st.session_state.retrieval_agent = retriever
@@ -91,7 +81,9 @@ if user_input:
     with st.spinner("Goethe denkt nach..."):
         start = time.time()
 
-        subqueries = query_agent.decompose_query(user_input)
+        # Decompose user question into subqueries
+        subqueries = query_agent.decompose_question(user_input)
+        # Retrieve docs for each subquery (possibly in parallel)
         with ThreadPoolExecutor(max_workers=3) as executor:
             futures = [
                 executor.submit(
@@ -101,16 +93,56 @@ if user_input:
                 )
                 for subq in subqueries
             ]
-            docs = [doc for future in futures for doc in future.result()]
+            # Each future returns (docs, hypo_answer); collect docs only
+            results = [future.result() for future in futures]
 
-        unique_docs = list({doc[0]: doc for doc in docs}.values())
-        top_docs = ranker.rerank(unique_docs, user_input) if unique_docs else []
+        docs = []
+        hypo_answer = None
+        for docs_result, hypo in results:
+            docs.extend(docs_result)
+            if hypo and not docs:  # Use hypothetical answer only if no docs at all
+                hypo_answer = hypo
 
+        # Remove duplicates by source+snippet
+        seen = set()
+        unique_docs = []
+        for doc in docs:
+            if isinstance(doc, tuple):  # (snippet, source, category)
+                key = (doc[0], doc[1])
+            elif isinstance(doc, dict): # {'content', 'source', ...}
+                key = (doc.get('content'), doc.get('source'))
+            else:
+                key = str(doc)
+            if key not in seen:
+                seen.add(key)
+                unique_docs.append(doc)
+
+        # Rank the documents
+        top_docs = []
+        if unique_docs:
+            top_docs = ranker.rank(unique_docs, user_input, top_k=5)
+
+        # Build context for answer
+        # If docs are (snippet, source, category) tuples:
+        if top_docs and isinstance(top_docs[0], tuple):
+            context = "\n\n".join([doc[0] for doc in top_docs])
+        elif top_docs and isinstance(top_docs[0], dict):
+            context = "\n\n".join([doc.get("content", "") for doc in top_docs])
+        else:
+            context = ""
+
+        # Use chat history (last two exchanges) for context if available
         chat_history = ""
         for past in st.session_state.history[-2:]:
             chat_history += f"Frage: {past['frage']}\nAntwort: {past['antwort']}\n\n"
 
-        answer = answer_agent.generate(top_docs, user_input, history=chat_history)
+        if context:
+            answer = answer_agent.synthesize_answer(context, user_input)
+        elif hypo_answer:
+            answer = hypo_answer
+        else:
+            answer = "Ich konnte leider keine relevante Antwort finden."
+
         end = time.time()
 
         neue_nachricht = {
@@ -122,19 +154,20 @@ if user_input:
                 "query": list(query_agent.thoughts),
                 "retrieval": list(retriever.thoughts),
                 "ranking": list(ranker.thoughts),
-                "antwort": list(answer_agent.thoughts)
+                "antwort": list(answer_agent.thoughts),
             },
             "dauer": f"Antwortzeit: {end - start:.2f} Sekunden"
         }
 
         st.session_state.history.append(neue_nachricht)
 
+        # Clear agent thoughts for next round
         query_agent.thoughts.clear()
         retriever.thoughts.clear()
         ranker.thoughts.clear()
         answer_agent.thoughts.clear()
 
-# --- Chat ---
+# --- Chat Display ---
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
 for item in st.session_state.history:
@@ -144,7 +177,15 @@ for item in st.session_state.history:
 
     if item["quellen"]:
         with st.expander("Quellen & Zitate"):
-            for snippet, source, category in item["quellen"]:
+            for doc in item["quellen"]:
+                if isinstance(doc, tuple):
+                    snippet, source, category = doc
+                elif isinstance(doc, dict):
+                    snippet = doc.get("content", "")
+                    source = doc.get("source", "Unbekannt")
+                    category = doc.get("category", "")
+                else:
+                    snippet, source, category = str(doc), "Unbekannt", ""
                 st.markdown(f"**{source}** (_{category}_)")
                 st.code(snippet[:500] + ("..." if len(snippet) > 500 else ""))
 
