@@ -80,11 +80,14 @@ grep -vE '^faiss-(cpu|gpu)' requirements.txt > requirements_nofaiss.txt
 
 # Detect NVIDIA GPU and install faiss-gpu or faiss-cpu as appropriate
 if command -v nvidia-smi &> /dev/null; then
-  echo "NVIDIA GPU detected. Installing faiss-gpu..."
-  pip install "faiss-gpu>=1.7.4" || { echo "faiss-gpu install failed, falling back to faiss-cpu"; pip install "faiss-cpu>=1.7.4"; }
+  echo "NVIDIA GPU detected. Installing faiss-gpu==1.7.2..."
+  if ! pip install faiss-gpu==1.7.2; then
+    echo "faiss-gpu install failed, falling back to faiss-cpu==1.7.2"
+    pip install faiss-cpu==1.7.2
+  fi
 else
-  echo "No NVIDIA GPU detected. Installing faiss-cpu..."
-  pip install "faiss-cpu>=1.7.4"
+  echo "No NVIDIA GPU detected. Installing faiss-cpu==1.7.2..."
+  pip install faiss-cpu==1.7.2
 fi
 
 # Install other requirements (excluding faiss-cpu/gpu)

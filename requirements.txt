@@ -21,7 +21,3 @@ python-dotenv>=1.0.0           # Environment variable management
 # Search and Ranking
 Whoosh>=2.7.4                  # Full-text search library
 scikit-learn>=1.2.2            # ML library for ranking and scoring
-
-# Vectorstore and Embedding Requirements
-# faiss-cpu>=1.7.4  # For most users (CPU only). Comment this out if you want GPU support.
-# faiss-gpu>=1.7.4  # Uncomment this instead if you have a supported GPU environment.
