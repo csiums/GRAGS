@@ -2,6 +2,13 @@
 set -e
 set -x
 
+if sudo -v; then
+  while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+else
+  echo "Sudo authentication failed."
+  exit 1
+fi
+
 if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
 else
