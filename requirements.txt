@@ -22,6 +22,7 @@ python-dotenv>=1.0.0           # Environment variable management
 Whoosh>=2.7.4                  # Full-text search library
 scikit-learn>=1.2.2            # ML library for ranking and scoring
 
-# Optional GPU Support
-# Uncomment the following line for GPU-enabled FAISS
-# faiss-gpu>=1.7.4
+# Vectorstore and Embedding Requirements
+faiss-cpu>=1.7.4               # FAISS for CPU (default; comment this line if you want GPU support)
+# faiss-gpu>=1.7.4             # FAISS for GPU (uncomment instead of faiss-cpu if you have a compatible GPU environment)
+sentence-transformers>=2.2.2   # Pre-trained sentence embedding models
