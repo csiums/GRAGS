@@ -4,6 +4,8 @@ import os
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 
+st.set_page_config(page_title="GoetheGPT", layout="centered")
+
 from rag_pipeline import load_or_create_vectorstore, create_vectorstore, load_documents
 from agents import QueryAgent, RetrievalAgent, RankingAgent, AnswerAgent
 from ollama_chain import get_ollama_chain, get_simple_llm
@@ -19,9 +21,6 @@ ensure_model_available(selected_model)
 
 # Warn the user if no GPU is available
 warn_if_no_gpu()
-
-# --- Streamlit UI Setup ---
-st.set_page_config(page_title="GoetheGPT", layout="centered")
 
 # Load external styles
 with open("styles.css") as f:
