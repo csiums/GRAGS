@@ -49,6 +49,14 @@ Kategorien:
 Zugeordnete Kategorie (nur eine):
 """
 
+CATEGORY_DESCRIPTIONS = {
+    "Biographie": "Informationen zu Goethes Leben, persönliche Hintergründe, Reisen und biografische Ereignisse.",
+    "Briefe": "Briefwechsel und persönliche Korrespondenz Goethes mit Freunden, Bekannten und bedeutenden Persönlichkeiten seiner Zeit.",
+    "Weltwissen": "Goethes wissenschaftliche Erkenntnisse, philosophische Betrachtungen und seine Beschäftigung mit Natur, Farbenlehre und allgemeinem Wissen.",
+    "Werke": "Literarische Werke Goethes, darunter Gedichte, Dramen, Romane und Essays, wie Faust, Werther, West-östlicher Divan und mehr.",
+    "Werkdeutung": "Literaturwissenschaftliche Sekundärliteratur verschiedener Experten auf Goethes Werk."
+}
+
 EXPAND_QUERY_PROMPT = """
 Nenne alternative Formulierungen oder Synonyme für folgende Frage, um mehr relevante Dokumente zu finden.
 Gib maximal 3 Varianten als Liste zurück.
