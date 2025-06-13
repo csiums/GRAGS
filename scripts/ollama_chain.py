@@ -5,9 +5,6 @@ from ollama_utils import get_device, ensure_model_available
 from prompts import OLLAMA_SYSTEM_PROMPT
 
 def get_model_params():
-    """
-    Retrieve model parameters from environment variables with sensible defaults.
-    """
     def _float_env(var, default):
         try:
             return float(os.getenv(var, default))
@@ -30,10 +27,6 @@ def get_model_params():
     }
 
 def get_ollama_chain(model_name=None, device=None):
-    """
-    Initialize a LangChain Ollama model with the specified parameters and device.
-    Returns a chain: prompt | llm
-    """
     if model_name is None:
         model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
     
@@ -57,9 +50,6 @@ def get_ollama_chain(model_name=None, device=None):
     return prompt | llm
 
 def get_simple_llm(model_name=None, device=None):
-    """
-    Retrieve a simple LLM without the prompt template, for utility tasks.
-    """
     if model_name is None:
         model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
     
