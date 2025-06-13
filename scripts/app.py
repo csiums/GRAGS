@@ -26,7 +26,6 @@ selected_model = os.getenv("OLLAMA_MODEL")
 ensure_model_available(selected_model)
 warn_if_no_gpu()
 
-# Load external styles
 with open("styles.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
@@ -81,9 +80,7 @@ if user_input:
     with st.spinner("Goethe denkt nach..."):
         start = time.time()
 
-        # Decompose user question into subqueries
         subqueries = query_agent.decompose_question(user_input)
-        # Retrieve docs for each subquery (possibly in parallel)
         with ThreadPoolExecutor(max_workers=3) as executor:
             futures = [
                 executor.submit(
@@ -93,23 +90,21 @@ if user_input:
                 )
                 for subq in subqueries
             ]
-            # Each future returns (docs, hypo_answer); collect docs only
             results = [future.result() for future in futures]
 
         docs = []
         hypo_answer = None
         for docs_result, hypo in results:
             docs.extend(docs_result)
-            if hypo and not docs:  # Use hypothetical answer only if no docs at all
+            if hypo and not docs:
                 hypo_answer = hypo
 
-        # Remove duplicates by source+snippet
         seen = set()
         unique_docs = []
         for doc in docs:
-            if isinstance(doc, tuple):  # (snippet, source, category)
+            if isinstance(doc, tuple):
                 key = (doc[0], doc[1])
-            elif isinstance(doc, dict): # {'content', 'source', ...}
+            elif isinstance(doc, dict):
                 key = (doc.get('content'), doc.get('source'))
             else:
                 key = str(doc)
@@ -117,13 +112,10 @@ if user_input:
                 seen.add(key)
                 unique_docs.append(doc)
 
-        # Rank the documents
         top_docs = []
         if unique_docs:
             top_docs = ranker.rank(unique_docs, user_input, top_k=5)
 
-        # Build context for answer
-        # If docs are (snippet, source, category) tuples:
         if top_docs and isinstance(top_docs[0], tuple):
             context = "\n\n".join([doc[0] for doc in top_docs])
         elif top_docs and isinstance(top_docs[0], dict):
@@ -131,7 +123,6 @@ if user_input:
         else:
             context = ""
 
-        # Use chat history (last two exchanges) for context if available
         chat_history = ""
         for past in st.session_state.history[-2:]:
             chat_history += f"Frage: {past['frage']}\nAntwort: {past['antwort']}\n\n"
@@ -161,7 +152,6 @@ if user_input:
 
         st.session_state.history.append(neue_nachricht)
 
-        # Clear agent thoughts for next round
         query_agent.thoughts.clear()
         retriever.thoughts.clear()
         ranker.thoughts.clear()
