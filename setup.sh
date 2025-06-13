@@ -2,7 +2,9 @@
 set -e
 set -x
 
+# Sudo password caching: prompt once and keep session alive
 if sudo -v; then
+  # Keep-alive: update existing sudo time stamp until this script exits
   while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 else
   echo "Sudo authentication failed."
@@ -16,9 +18,9 @@ else
   exit 1
 fi
 
+# Git LFS install (cross-distro)
 if ! command -v git-lfs &> /dev/null; then
   echo "git-lfs not found. Installing..."
-
   if command -v dnf &> /dev/null; then
     sudo dnf install -y git-lfs
   elif command -v zypper &> /dev/null; then
@@ -36,12 +38,13 @@ if ! command -v git-lfs &> /dev/null; then
 fi
 git lfs install
 
+# Download model if not present
 mkdir -p llm_models
 if [ ! -d "llm_models/bge_reranker_base" ]; then
   git clone https://huggingface.co/BAAI/bge-reranker-base llm_models/bge_reranker_base
 fi
 
-# ---- Python 3.10 and venv setup ----
+# --- Python 3.10 and venv setup (for faiss-gpu compatibility) ---
 PYTHON_BIN=python3.10
 if ! command -v $PYTHON_BIN &> /dev/null; then
   echo "Python 3.10 not found, attempting to install..."
@@ -68,14 +71,14 @@ if [ ! -d ".venv" ]; then
 fi
 source .venv/bin/activate
 
-# ---- pip upgrade ----
+# Upgrade pip in venv
 pip install --upgrade pip
 
-# ---- Conditional FAISS install ----
+# --- Conditional FAISS install ---
 # Remove faiss-cpu/faiss-gpu from requirements.txt for this step!
 grep -vE '^faiss-(cpu|gpu)' requirements.txt > requirements_nofaiss.txt
 
-# Detect NVIDIA GPU
+# Detect NVIDIA GPU and install faiss-gpu or faiss-cpu as appropriate
 if command -v nvidia-smi &> /dev/null; then
   echo "NVIDIA GPU detected. Installing faiss-gpu..."
   pip install "faiss-gpu>=1.7.4" || { echo "faiss-gpu install failed, falling back to faiss-cpu"; pip install "faiss-cpu>=1.7.4"; }
@@ -84,10 +87,11 @@ else
   pip install "faiss-cpu>=1.7.4"
 fi
 
-# ---- Remaining requirements ----
+# Install other requirements (excluding faiss-cpu/gpu)
 pip install -r requirements_nofaiss.txt
 rm requirements_nofaiss.txt
 
+# Ollama install
 if ! command -v ollama &> /dev/null; then
   echo "Ollama not found. Installing via official script..."
   curl -fsSL https://ollama.com/install.sh | sh
