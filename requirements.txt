@@ -25,8 +25,3 @@ scikit-learn>=1.2.2            # ML library for ranking and scoring
 # Optional GPU Support
 # Uncomment the following line for GPU-enabled FAISS
 # faiss-gpu>=1.7.4
-
-# Notes:
-# - Use `pip install -r requirements.txt` to install.
-# - Remove upper bounds to allow pip to resolve compatible versions.
-# - Python 3.13 is very new — allow pip to choose best matches for it.
