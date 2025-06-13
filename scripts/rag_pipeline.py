@@ -100,8 +100,7 @@ def load_documents():
     logging.info(f"{len(docs)} Dokumente wurden erfolgreich geladen.")
     return docs
 
-
-    # --- Vektorstore erstellen ---
+# --- Vektorstore erstellen ---
 def create_vectorstore(docs):
     logging.info("Erstelle Vektorstore aus den geladenen Dokumenten...")
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
@@ -149,11 +148,3 @@ def retrieve_docs_with_sources(vstore, query, k=4, category=None):
         (doc.page_content, doc.metadata.get("source", "unbekannt"), doc.metadata.get("category", "unbekannt"))
         for doc in results[:k]
     ]
-
-# --- Letzte Änderung für Cache-Gültigkeit ---
-def get_last_modified():
-    return max(
-        os.path.getmtime(os.path.join(root, f))
-        for root, _, files in os.walk(DOCS_PATH)
-        for f in files
-    )
