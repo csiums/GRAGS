@@ -1,14 +1,25 @@
 #!/bin/bash
+set -e
 
-echo "Starting GoetheGPT application..."
+echo "Starte GoetheGPT Anwendung..."
 
-if [ ! -f .env ]; then
-    echo ".env file not found. Please create one with the required environment variables."
-    exit 1
+# .venv aktivieren, falls vorhanden
+if [ -d ".venv" ]; then
+  source .venv/bin/activate
+else
+  echo "Warnung: Virtuelle Umgebung (.venv) nicht gefunden. Es wird empfohlen, Setup zuerst auszuführen."
 fi
 
-export $(grep -v '^#' .env | xargs)
+# .env prüfen und exportieren
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo ".env Datei nicht gefunden. Bitte erstellen."
+  exit 1
+fi
 
+# Warnung falls keine GPU verfügbar (optional)
 python3 -c "from scripts.ollama_utils import warn_if_no_gpu; warn_if_no_gpu()"
 
+# Streamlit App starten
 streamlit run scripts/app.py

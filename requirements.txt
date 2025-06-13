@@ -1,23 +1,30 @@
 # Core Requirements
-streamlit>=1.20.0              # Web-based app framework
-langchain>=0.1.0               # LangChain core
-langchain-core>=0.1.0          # LangChain core internals
-langchain-community>=0.0.6     # Community tools for LangChain
-langchain-ollama>=0.1.0        # Ollama integration for LangChain
-langchain-huggingface>=0.0.2   # Hugging Face integration
+numpy==1.26.2
+streamlit>=1.20.0
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-community>=0.0.6
+langchain-ollama>=0.1.0
+langchain-huggingface>=0.0.2
 
 # Vectorstore and Embedding Requirements
-faiss-cpu>=1.7.4               # FAISS for CPU (use faiss-gpu for GPU environments)
-sentence-transformers>=2.2.2   # Pre-trained sentence embedding models
+sentence-transformers>=2.2.2
 
 # PDF and Document Parsing
-pypdf>=3.8.1                   # PDF parsing library
-unstructured>=0.9.7            # Unstructured document processing library
+pypdf>=3.8.1
+unstructured>=0.9.7
 
 # Llama and Ollama Requirements
-llama-cpp-python>=0.1.77       # Llama.cpp Python bindings
-python-dotenv>=1.0.0           # Environment variable management
+llama-cpp-python>=0.1.77
+python-dotenv>=1.0.0
 
 # Search and Ranking
-Whoosh>=2.7.4                  # Full-text search library
-scikit-learn>=1.2.2            # ML library for ranking and scoring
+Whoosh>=2.7.4
+scikit-learn>=1.2.2
+
+# Faiss for Search (CPU or GPU version)
+faiss-cpu==1.7.1  # Für CPU-only, direkt per pip installierbar
+# faiss-gpu==1.7.1  # Für GPU, nur wenn du ein passendes System und CUDA hast
+
+# PyTorch (siehe Installationshinweis unten)
+torch==2.0.1  # Für CPU oder CUDA-Umgebung, Details siehe README
