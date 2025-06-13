@@ -3,6 +3,7 @@ import subprocess
 import logging
 import time
 import requests
+from sentence_transformers import CrossEncoder
 
 try:
     import torch
@@ -143,3 +144,32 @@ def get_default_embeddings_model(model_name="all-MiniLM-L6-v2"):
     """Lädt das Standardmodell für Text-Embeddings von HuggingFace."""
     from langchain_huggingface import HuggingFaceEmbeddings
     return HuggingFaceEmbeddings(model_name=model_name)
+
+
+def load_cross_encoder_with_cache(hub_model_name, local_model_dir, device="cpu"):
+    """
+    Attempts to load a CrossEncoder model from HuggingFace Hub; if offline or download fails,
+    attempts to load from a local cache directory.
+    """
+    try:
+        logging.info(f"Trying to load CrossEncoder from HuggingFace Hub: {hub_model_name}")
+        model = CrossEncoder(hub_model_name, device=device)
+        # Save to cache for future offline use
+        if not os.path.exists(local_model_dir):
+            model.save(local_model_dir)
+        return model
+    except Exception as e_hub:
+        logging.warning(f"Could not load model from HuggingFace Hub: {e_hub}")
+        # Try local cache
+        if os.path.exists(local_model_dir):
+            try:
+                logging.info(f"Trying to load CrossEncoder from local cache: {local_model_dir}")
+                return CrossEncoder(local_model_dir, device=device)
+            except Exception as e_local:
+                raise RuntimeError(f"Failed to load model from local cache: {e_local}")
+        else:
+            raise RuntimeError(
+                f"Model could not be loaded from HuggingFace or local cache.\n"
+                f"Error from HuggingFace: {e_hub}\n"
+                f"Local cache '{local_model_dir}' does not exist."
+            )

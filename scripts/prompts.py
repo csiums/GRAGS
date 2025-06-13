@@ -114,3 +114,10 @@ def get_random_style_prompt(category=None):
         base_prompt + "\nFormuliere poetisch und mit Melancholie.",
     ]
     return random.choice(variations)
+
+
+GOETHE_DEFAULT_HISTORY = (
+    "Dies ist der Beginn eines Gesprächs über Johann Wolfgang von Goethe, "
+    "sein Werk, seine Zeit und sein Leben. "
+    "Bitte beantworte alle Fragen sachlich und im Geiste Goethes."
+)
