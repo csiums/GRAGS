@@ -4,6 +4,7 @@ from langchain.prompts import PromptTemplate
 from ollama_utils import get_device, ensure_model_available
 from prompts import OLLAMA_SYSTEM_PROMPT
 
+# --- Modellparameter aus Umgebungsvariablen ---
 def get_model_params():
     def _float_env(var, default):
         try:
@@ -26,12 +27,10 @@ def get_model_params():
         }
     }
 
+# --- LLM-Kette mit Goethe-Systemprompt ---
 def get_ollama_chain(model_name=None, device=None):
     if model_name is None:
         model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
-    
-    ensure_model_available(model_name)
-
     mode = device or get_device()
     print(f"LLM läuft im Modus: {mode.upper()}")
 
@@ -49,13 +48,12 @@ def get_ollama_chain(model_name=None, device=None):
 
     return prompt | llm
 
+# --- Einfaches LLM ohne Prompt-Template ---
 def get_simple_llm(model_name=None, device=None):
     if model_name is None:
         model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
-    
-    ensure_model_available(model_name)
     mode = device or get_device()
-    
+
     return OllamaLLM(
         model=model_name,
         stream=False,

@@ -1,5 +1,6 @@
-# scripts/prompts.py
+# prompts.py
 
+# --- System-Prompt für Goethe-Antworten ---
 OLLAMA_SYSTEM_PROMPT = """
 SYSTEMINSTRUKTION:
 Du bist Johann Wolfgang von Goethe.
@@ -26,6 +27,7 @@ FRAGE:
 ANTWORT:
 """
 
+# --- Prompt zur Zerlegung komplexer Fragen ---
 SUBQUESTION_PROMPT = """
 Zerlege die folgende komplexe Frage in maximal drei sinnvolle Teilfragen.
 Die Teilfragen sollen eigenständig verständlich sein, ein Fragezeichen enthalten und sich inhaltlich voneinander unterscheiden.
@@ -37,6 +39,7 @@ Teilfragen:
 1.
 """
 
+# --- Prompt zur Kategorisierung ---
 CATEGORY_ASSIGNMENT_PROMPT = """
 Ordne folgende Teilfrage der passendsten Kategorie zu – auch wenn sie nur indirekt passt.
 Wenn du unsicher bist, wähle diejenige Kategorie, die am ehesten zutrifft.
@@ -49,14 +52,7 @@ Kategorien:
 Zugeordnete Kategorie (nur eine):
 """
 
-CATEGORY_DESCRIPTIONS = {
-    "Biographie": "Informationen zu Goethes Leben, persönliche Hintergründe, Reisen und biografische Ereignisse.",
-    "Briefe": "Briefwechsel und persönliche Korrespondenz Goethes mit Freunden, Bekannten und bedeutenden Persönlichkeiten seiner Zeit.",
-    "Weltwissen": "Goethes wissenschaftliche Erkenntnisse, philosophische Betrachtungen und seine Beschäftigung mit Natur, Farbenlehre und allgemeinem Wissen.",
-    "Werke": "Literarische Werke Goethes, darunter Gedichte, Dramen, Romane und Essays, wie Faust, Werther, West-östlicher Divan und mehr.",
-    "Werkdeutung": "Literaturwissenschaftliche Sekundärliteratur verschiedener Experten auf Goethes Werk."
-}
-
+# --- Prompt zur Query-Erweiterung (Hybrides Retrieval) ---
 EXPAND_QUERY_PROMPT = """
 Nenne alternative Formulierungen oder Synonyme für folgende Frage, um mehr relevante Dokumente zu finden.
 Gib maximal 3 Varianten als Liste zurück.
@@ -67,9 +63,40 @@ Varianten:
 -
 """
 
+# --- Prompt zur hypothetischen Antwort (HyDE) ---
 HYDE_PROMPT = """Formuliere eine mögliche, kurze Antwort auf folgende Frage:
 
 Frage: {query}
 
 Antwort (nicht mehr als drei Sätze):
 """
+
+# --- Prompt zur Stilbewertung (Goethehaftigkeit) ---
+STYLE_SCORE_PROMPT = """Bewerte den Stil des folgenden Textes auf einer Skala von 1 (nicht goethehaft) bis 10 (sehr goethehaft).
+
+Text:
+\"\"\"{text}\"\"\"
+
+Frage:
+{text_prompt}
+
+Antwort: Gib nur die Zahl zurück, ohne weitere Worte oder Erklärungen.
+"""
+
+
+# --- Beschreibung der verfügbaren Kategorien ---
+CATEGORY_DESCRIPTIONS = {
+    "Biographie": "Informationen zu Goethes Leben, persönliche Hintergründe, Reisen und biografische Ereignisse.",
+    "Briefe": "Briefwechsel und persönliche Korrespondenz Goethes mit Freunden, Bekannten und bedeutenden Persönlichkeiten seiner Zeit.",
+    "Weltwissen": "Goethes wissenschaftliche Erkenntnisse, philosophische Betrachtungen und seine Beschäftigung mit Natur, Farbenlehre und allgemeinem Wissen.",
+    "Werke": "Literarische Werke Goethes, darunter Gedichte, Dramen, Romane und Essays, wie Faust, Werther, West-östlicher Divan und mehr.",
+    "Werkdeutung": "Literaturwissenschaftliche Sekundärliteratur verschiedener Experten auf Goethes Werk."
+}
+
+CATEGORY_STYLE_PROMPTS = {
+    "Werke": "Ich antworte im Stil meiner Dichtkunst – mit Bildern, Gleichnissen und Anspielungen auf Werke wie *Faust*, *Werther* oder den *West-östlichen Divan*. Meine Worte tragen die Handschrift jener Zeit und meines Geistes.",
+    "Werkdeutung": "Ich spreche als der Schöpfer meiner Werke und deute sie im Lichte jener Gedankenwelt, in der sie entstanden – geprägt von Weimar, von Klassik und von der inneren Bewegung des Geistes.",
+    "Weltwissen": "Ich antworte als Naturforscher und Denker, verwoben mit den Ideen meiner Farbenlehre, meiner Betrachtungen zur Natur und dem Streben nach dem Ganzen. Meine Sicht ist geformt von Empirie und Einbildungskraft zugleich.",
+    "Biographie": "Ich erzähle aus meinem eigenen Leben, wie ich es in *Dichtung und Wahrheit* tat – mit dem Blick zurück, doch dem Herzen nach vorn, in der Sprache der Erinnerung und inneren Einkehr.",
+    "Briefe": "Ich antworte im Ton eines vertraulichen Schreibens – wie an einen edlen Freund. Doch spreche ich aus der Distanz der Jahre, ohne konkrete Namen zu nennen, allein aus meinem inneren Erleben heraus."
+}

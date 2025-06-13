@@ -1,5 +1,5 @@
-import subprocess
 import os
+import subprocess
 import logging
 
 try:
@@ -7,12 +7,12 @@ try:
 except ImportError:
     torch = None
 
-
-# --- Device Management ---
+# --- Geräteerkennung ---
 def get_device():
     device_env = os.getenv("DEVICE")
     if device_env:
         return device_env
+
     use_cuda_env = os.getenv("USE_CUDA", "true").lower() == "true"
     if torch and use_cuda_env and torch.cuda.is_available():
         return "cuda"
@@ -20,13 +20,11 @@ def get_device():
         return "mps"
     return "cpu"
 
-
 def warn_if_no_gpu():
     if get_device() == "cpu":
-        print("Warning: No GPU detected. Running on CPU. For best performance, use a machine with CUDA.")
+        print("⚠️  Hinweis: Kein GPU erkannt – Anwendung läuft auf CPU. Für beste Leistung CUDA verwenden.")
 
-
-# --- Logging Configuration ---
+# --- Logging-Konfiguration ---
 def configure_logging():
     minimal = os.getenv("MINIMAL_LOGGING", "false").lower() == "true"
     if minimal:
@@ -36,23 +34,25 @@ def configure_logging():
     else:
         logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
-
-# --- Model Management ---
+# --- Modellverwaltung für Ollama ---
 def ensure_model_available(model_name):
     try:
         result = subprocess.run(["ollama", "list"], capture_output=True, text=True, check=True)
         if model_name not in result.stdout:
-            print(f"🔄 Pulling Ollama model '{model_name}'...")
+            print(f"🔄 Lade Ollama-Modell '{model_name}'...")
             subprocess.run(["ollama", "pull", model_name], check=True)
-            print(f"✅ Model '{model_name}' successfully pulled.")
+            print(f"✅ Modell '{model_name}' erfolgreich geladen.")
         else:
-            print(f"✅ Model '{model_name}' already available.")
+            print(f"✅ Modell '{model_name}' ist bereits verfügbar.")
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
-            f"❌ Failed to pull or list Ollama model '{model_name}'.\n"
-            f"Are you offline?\n\nTechnical error:\n{e}"
+            f"❌ Konnte Modell '{model_name}' nicht über 'ollama' laden oder prüfen.\n"
+            f"Möglicherweise keine Internetverbindung?\n\nTechnischer Fehler:\n{e}"
         )
 
+def ensure_models_available(model_names):
+    for model in model_names:
+        ensure_model_available(model)
 
 def list_ollama_models():
     try:
@@ -73,31 +73,21 @@ def list_ollama_models():
         print(f"Fehler bei 'ollama list': {e}")
         return []
 
-
-def ensure_models_available(model_names):
-    for model in model_names:
-        ensure_model_available(model)
-
-
-# --- Utility Functions ---
+# --- Sonstige Hilfsfunktionen ---
 def get_env_var(name, default=None, required=False):
     value = os.getenv(name, default)
     if required and value is None:
         raise RuntimeError(f"Environment variable '{name}' is required but not set.")
     return value
 
-
 def get_absolute_path(relative_path):
     return os.path.abspath(relative_path)
-
 
 def log_rag_action(action, details=""):
     logging.info(f"[RAG] {action}: {details}")
 
-
 def update_progress_bar(progress, processed, total, description=""):
     progress.progress(processed / total, text=f"{description} ({processed}/{total})")
-
 
 def get_default_embeddings_model(model_name="all-MiniLM-L6-v2"):
     from langchain_huggingface import HuggingFaceEmbeddings
